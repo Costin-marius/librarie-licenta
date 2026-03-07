@@ -11,6 +11,20 @@ router.get('/', async (req, res) => {
         res.status(500).json({ mesaj: 'Eroare la extragerea cărților' });
     }
 });
+//adăugarea unei cărți noi din formular
+router.post('/', async (req, res) => {
+    try {
+        // req.body conține datele trimise din formularul de pe frontend
+        const nouaCarte = new Carte(req.body); 
+        const carteSalvata = await nouaCarte.save();
+        
+        res.status(201).json({ mesaj: 'Cartea a fost adăugată cu succes!', carte: carteSalvata });
+    } catch (eroare) {
+        res.status(400).json({ mesaj: 'Eroare la adăugarea cărții. Verifică datele!', eroare });
+    }
+});
+
+
 
 // 2. Rută TEMPORARĂ pentru a adăuga rapid 3 cărți de test (Seed)
 router.post('/seed', async (req, res) => {
@@ -31,6 +45,36 @@ router.post('/seed', async (req, res) => {
         }
     } catch (eroare) {
         res.status(500).json({ mesaj: 'Eroare la adăugarea cărților', eroare });
+    }
+});
+
+//ruta delete
+router.delete('/:id', async (req, res) => {
+    try {
+        const carteStearsa = await Carte.findByIdAndDelete(req.params.id);
+        if (!carteStearsa) {
+            return res.status(404).json({ mesaj: 'Cartea nu a fost găsită!' });
+        }
+        res.json({ mesaj: 'Cartea a fost ștearsă cu succes!' });
+    } catch (eroare) {
+        res.status(500).json({ mesaj: 'Eroare la ștergerea cărții', eroare });
+    }
+});
+
+//actualizarea unei carti
+router.put('/:id', async (req, res) => {
+    try {
+        const carteActualizata = await Carte.findByIdAndUpdate(
+            req.params.id, 
+            req.body, 
+            { new: true } // Îi spunem să ne returneze varianta nouă, actualizată
+        );
+        if (!carteActualizata) {
+            return res.status(404).json({ mesaj: 'Cartea nu a fost găsită!' });
+        }
+        res.json({ mesaj: 'Cartea a fost actualizată!', carte: carteActualizata });
+    } catch (eroare) {
+        res.status(500).json({ mesaj: 'Eroare la actualizarea cărții', eroare });
     }
 });
 

@@ -1,67 +1,51 @@
 const express = require('express');
-const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User'); // Importăm modelul User
+const User = require('../models/User'); 
 
-//register
+const router = express.Router();
+
+// REGISTER
 router.post('/register', async (req, res) => {
     try {
-        // Extragem email-ul și parola trimise de pe frontend
+        // AM SCOS NUMELE DE AICI: preluăm doar email și parolă de la interfață
         const { email, parola } = req.body;
-
-        // 1. Verificăm dacă utilizatorul există deja în baza de date
+        
         const userExistent = await User.findOne({ email });
-        if (userExistent) {
-            return res.status(400).json({ mesaj: 'Acest email este deja folosit!' });
-        }
+        if (userExistent) return res.status(400).json({ mesaj: 'Email deja folosit!' });
 
-        // 2. Criptăm parola 
         const salt = await bcrypt.genSalt(10);
         const parolaCriptata = await bcrypt.hash(parola, salt);
 
-        // 3. Creăm și salvăm noul utilizator
-        const newUser = new User({
-            email,
-            parola: parolaCriptata
-        });
+        // TRUCUL NOSTRU: Dacă email-ul conține "admin", primește rolul de admin
+        const rolAtribuit = email.includes('admin') ? 'admin' : 'client';
 
-        await newUser.save();
+        // AM SCOS NUMELE ȘI DE AICI
+        const userNou = new User({ email, parola: parolaCriptata, rol: rolAtribuit });
+        await userNou.save();
+
         res.status(201).json({ mesaj: 'Cont creat cu succes!' });
-
     } catch (eroare) {
-        res.status(500).json({ mesaj: 'Eroare la server în timpul înregistrarii.', eroare });
+        console.error("Eroare la înregistrare:", eroare); // Asta ne ajută să vedem eroarea exactă în terminalul de backend
+        res.status(500).json({ mesaj: 'Eroare la server' });
     }
 });
 
-//login
+// LOGIN
 router.post('/login', async (req, res) => {
     try {
         const { email, parola } = req.body;
-
-        // 1. Verificăm dacă există un cont cu acest email
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ mesaj: 'Email sau parola incorecte!' });
-        }
+        if (!user) return res.status(400).json({ mesaj: 'Email sau parolă greșită!' });
 
-        // 2. Comparăm parola introdusă cu cea criptată din baza de date
-        const parolaValida = await bcrypt.compare(parola, user.parola);
-        if (!parolaValida) {
-            return res.status(400).json({ mesaj: 'Email sau parola incorecte!' });
-        }
+        const parolaCorecta = await bcrypt.compare(parola, user.parola);
+        if (!parolaCorecta) return res.status(400).json({ mesaj: 'Email sau parolă greșită!' });
 
-        // 3. Dacă totul e ok, generăm un Token valabil 30 min
-        const token = jwt.sign(
-            { id: user._id }, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '30min' }
-        );
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_temporar', { expiresIn: '1h' });
 
-        res.json({ mesaj: 'Autentificare reusita!', token });
-
+        res.json({ token, rol: user.rol });
     } catch (eroare) {
-        res.status(500).json({ mesaj: 'Eroare la server în timpul autentificarii.', eroare });
+        res.status(500).json({ mesaj: 'Eroare la server' });
     }
 });
 

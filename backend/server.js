@@ -14,6 +14,7 @@ app.use(express.json()); //citeste date în format JSON
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 app.use('/api/carti', cartiRoutes);
+app.use('/api/comenzi', require('./routes/comenzi'));
 
 // Conectarea la baza de date
 mongoose.connect(process.env.MONGO_URI)

@@ -15,6 +15,10 @@ function Login() {
                 email,
                 parola
             });
+            alert('Logare cu succes!');
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('rol', response.data.rol);
+            window.location.href = '/';
             
             // Salvăm token-ul în browser
             localStorage.setItem('token', response.data.token);
