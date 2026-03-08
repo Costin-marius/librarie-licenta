@@ -11,11 +11,11 @@ function AdminDashboard() {
     const [arataModal, setArataModal] = useState(false);
     const [idEditare, setIdEditare] = useState(null);
     const [dateFormular, setDateFormular] = useState({
-        isbn: '', titlu: '', autor: '', editura: '', pret: '', stoc: '', imagine_url: ''
+        isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: ''
     });
 
     useEffect(() => {
-        // teoretic aici ar trebui sa verificam daca e admin inainte sa il lasam sa vada pagina
+        // Verificăm dacă e admin înainte să îl lăsăm să vadă pagina
         const rol = localStorage.getItem('rol');
         if (rol !== 'admin') {
             window.location.href = '/login';
@@ -40,7 +40,7 @@ function AdminDashboard() {
 
     const deschideModalAdaugare = () => {
         setIdEditare(null);
-        setDateFormular({ isbn: '', titlu: '', autor: '', editura: '', pret: '', stoc: '', imagine_url: '' });
+        setDateFormular({ isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: '' });
         setArataModal(true);
     };
 
@@ -99,7 +99,6 @@ function AdminDashboard() {
                 </div>
                 
                 <nav className="flex-1 p-4 space-y-2">
-                    {/* aici putem adauga mai multe tab-uri pe viitor */}
                     <button className="w-full flex items-center gap-3 bg-blue-600/10 text-blue-400 px-4 py-3 rounded-lg font-medium border border-blue-900/50">
                         📦 Inventar Cărți
                     </button>
@@ -202,7 +201,8 @@ function AdminDashboard() {
                         </div>
                         
                         <form onSubmit={salveazaCarte} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {['isbn', 'titlu', 'autor', 'editura'].map(camp => (
+                            {/* Am adăugat 'categorie' în lista de mapare */}
+                            {['isbn', 'titlu', 'autor', 'editura', 'categorie'].map(camp => (
                                 <div key={camp}>
                                     <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">{camp}</label>
                                     <input type="text" required value={dateFormular[camp]} onChange={(e) => setDateFormular({...dateFormular, [camp]: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"/>

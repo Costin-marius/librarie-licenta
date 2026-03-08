@@ -11,18 +11,19 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
     const [arataFormular, setArataFormular] = useState(false);
     const [idEditare, setIdEditare] = useState(null); 
     const [dateFormular, setDateFormular] = useState({
-        // Am adaugat 'categorie' aici
         isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: ''
     });
 
     // Căutare, Filtrare și Sortare
     const [termenCautare, setTermenCautare] = useState('');
     const [categorieSelectata, setCategorieSelectata] = useState('Toate');
-    const [criteriuSortare, setCriteriuSortare] = useState('default'); // default, pretCresc, pretDesc, az, za
+    const [criteriuSortare, setCriteriuSortare] = useState('default');
 
     // Comandă
     const [metodaPlata, setMetodaPlata] = useState('ramburs'); 
     const [dateLivrare, setDateLivrare] = useState({ nume: '', adresa: '', telefon: '' });
+    // Memorie nouă pentru datele cardului:
+    const [dateCard, setDateCard] = useState({ numar: '', expirare: '', cvv: '' });
 
     // ---- FUNCȚII CARE SE EXECUTĂ LA ÎNCEPUT ----
     useEffect(() => {
@@ -63,7 +64,7 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
             titlu: carte.titlu, 
             autor: carte.autor, 
             editura: carte.editura, 
-            categorie: carte.categorie || '', // ne asiguram ca nu pica daca vechile carti nu au categorie
+            categorie: carte.categorie || '', 
             pret: carte.pret, 
             stoc: carte.stoc, 
             imagine_url: carte.imagine_url
@@ -137,6 +138,7 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
             toast.success(`Comanda plasată cu succes!`);
             setCos([]);
             setDateLivrare({ nume: '', adresa: '', telefon: '' });
+            setDateCard({ numar: '', expirare: '', cvv: '' }); // Resetăm și cardul
             setArataCos(false);
             fetchCarti(); 
         } catch (error) {
@@ -145,11 +147,8 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
     };
 
     // ---- LOGICĂ DE FILTRARE ȘI SORTARE ----
-    
-    // 1. Extragem toate categoriile unice din cartile pe care le avem (eliminam undefined/gol)
     const categoriiDisponibile = ['Toate', ...new Set(carti.map(c => c.categorie).filter(cat => cat && cat.trim() !== ''))];
 
-    // 2. Aplicam Filtrele (Cautare text + Categorie selectata)
     let cartiProcesate = carti.filter(carte => {
         const textDeCautat = `${carte.titlu} ${carte.autor} ${carte.isbn}`.toLowerCase();
         const sePotrivesteCautarea = textDeCautat.includes(termenCautare.toLowerCase());
@@ -158,7 +157,6 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
         return sePotrivesteCautarea && sePotrivesteCategoria;
     });
 
-    // 3. Aplicam Sortarea
     if (criteriuSortare === 'pretCresc') {
         cartiProcesate.sort((a, b) => a.pret - b.pret);
     } else if (criteriuSortare === 'pretDesc') {
@@ -168,7 +166,6 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
     } else if (criteriuSortare === 'za') {
         cartiProcesate.sort((a, b) => b.titlu.localeCompare(a.titlu));
     }
-
 
     // ================= INTERFAȚA =================
     return (
@@ -180,7 +177,6 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
                 {/* --- BARA DE CĂUTARE ȘI BUTONUL ADMIN --- */}
                 {!arataCos && !arataFormular && (
                     <div className="mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
-                        
                         <div className="relative w-full max-w-2xl mx-auto">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <span className="text-gray-400 text-lg">🔍</span>
@@ -208,8 +204,6 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
                 {/* --- MENIU FILTRĂRI ȘI SORTARE --- */}
                 {!arataCos && !arataFormular && (
                     <div className="flex flex-col md:flex-row gap-4 mb-10 justify-between items-center bg-gray-900 p-4 rounded-xl border border-gray-800">
-                        
-                        {/* Butoane Categorii */}
                         <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0" style={{ scrollbarWidth: 'none' }}>
                             {categoriiDisponibile.map(cat => (
                                 <button
@@ -226,7 +220,6 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
                             ))}
                         </div>
 
-                        {/* Select Sortare */}
                         <div className="flex items-center gap-3 w-full md:w-auto">
                             <span className="text-gray-400 text-sm whitespace-nowrap">Sortează:</span>
                             <select
@@ -252,7 +245,6 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
                             {idEditare ? '✏️ Editează detaliile cărții' : '➕ Adaugă o carte nouă'}
                         </h3>
                         <form onSubmit={salveazaCarte} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                            {/* Am adaugat 'categorie' in lista de input-uri text */}
                             {['isbn', 'titlu', 'autor', 'editura', 'categorie'].map(camp => (
                                 <input key={camp} type="text" placeholder={camp.charAt(0).toUpperCase() + camp.slice(1)} required value={dateFormular[camp]} onChange={(e) => setDateFormular({...dateFormular, [camp]: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
                             ))}
@@ -322,7 +314,21 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
                                     <form onSubmit={plaseazaComanda} className="space-y-4">
                                         <input type="text" placeholder="Numele Complet" required value={dateLivrare.nume} onChange={e => setDateLivrare({...dateLivrare, nume: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
                                         <input type="text" placeholder="Adresa completă de livrare" required value={dateLivrare.adresa} onChange={e => setDateLivrare({...dateLivrare, adresa: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-                                        <input type="tel" placeholder="Număr de telefon" required value={dateLivrare.telefon} onChange={e => setDateLivrare({...dateLivrare, telefon: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                                        <input 
+                                            type="tel" 
+                                            placeholder="Număr de telefon (10 cifre, ex: 0712345678)" 
+                                            required 
+                                            value={dateLivrare.telefon} 
+                                            onChange={e => {
+                                                const doarNumere = e.target.value.replace(/[^0-9]/g, '');
+                                                if(doarNumere.length <= 10) setDateLivrare({...dateLivrare, telefon: doarNumere});
+                                            }} 
+                                            className={`w-full px-4 py-2 bg-gray-900 border rounded-lg text-white focus:outline-none focus:ring-2 transition-colors ${
+                                                dateLivrare.telefon.length > 0 && dateLivrare.telefon.length !== 10 
+                                                ? 'border-red-500 focus:ring-red-500' 
+                                                : 'border-gray-600 focus:ring-blue-500'
+                                            }`} 
+                                        />
                                         
                                         <div className="pt-4">
                                             <h4 className="font-medium text-gray-300 mb-3">Metoda de Plată</h4>
@@ -341,10 +347,59 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
                                         {metodaPlata === 'card' && (
                                             <div className="bg-gray-900 p-5 rounded-xl border border-gray-700 shadow-inner mt-4 space-y-4">
                                                 <p className="text-blue-400 text-sm font-bold flex items-center gap-2">💳 Plată Securizată</p>
-                                                <input type="text" placeholder="Număr Card (ex: 4111 2222 3333 4444)" required={metodaPlata === 'card'} className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                                                
+                                                {/* Număr Card */}
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Număr Card (16 cifre)" 
+                                                    required={metodaPlata === 'card'} 
+                                                    value={dateCard.numar}
+                                                    onChange={e => {
+                                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                                        if(val.length <= 16) setDateCard({...dateCard, numar: val});
+                                                    }}
+                                                    className={`w-full px-4 py-2 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 transition-colors ${
+                                                        dateCard.numar.length > 0 && dateCard.numar.length !== 16 ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-blue-500'
+                                                    }`}
+                                                />
+                                                
                                                 <div className="flex gap-4">
-                                                    <input type="text" placeholder="LL/AA" required={metodaPlata === 'card'} className="w-1/2 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
-                                                    <input type="text" placeholder="CVV" required={metodaPlata === 'card'} className="w-1/2 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                                                    {/* Data Expirării */}
+                                                    <input 
+    type="text" 
+    placeholder="LL/AA (ex: 12/25)" 
+    required={metodaPlata === 'card'} 
+    value={dateCard.expirare}
+    onChange={e => {
+        // Păstrăm doar cifrele din ce scrie utilizatorul
+        let val = e.target.value.replace(/[^0-9]/g, ''); 
+        
+        // Dacă a scris mai mult de 2 cifre, inserăm automat '/'
+        if (val.length >= 3) {
+            val = val.substring(0, 2) + '/' + val.substring(2, 4);
+        }
+        
+        setDateCard({...dateCard, expirare: val});
+    }}
+    className={`w-1/2 px-4 py-2 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 transition-colors ${
+        dateCard.expirare.length > 0 && dateCard.expirare.length !== 5 ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-blue-500'
+    }`}
+/>
+                                                    
+                                                    {/* CVV */}
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="CVV (3 cifre)" 
+                                                        required={metodaPlata === 'card'} 
+                                                        value={dateCard.cvv}
+                                                        onChange={e => {
+                                                            const val = e.target.value.replace(/[^0-9]/g, '');
+                                                            if(val.length <= 3) setDateCard({...dateCard, cvv: val});
+                                                        }}
+                                                        className={`w-1/2 px-4 py-2 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 transition-colors ${
+                                                            dateCard.cvv.length > 0 && dateCard.cvv.length !== 3 ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-blue-500'
+                                                        }`}
+                                                    />
                                                 </div>
                                             </div>
                                         )}
@@ -358,7 +413,7 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
                         )}
                     </div>
                 ) : (
-                    /* --- GRILA CU CĂRȚI (Folosim cartiProcesate acum) --- */
+                    /* --- GRILA CU CĂRȚI --- */
                     <>
                         {cartiProcesate.length === 0 ? (
                             <div className="text-center py-16">
@@ -372,17 +427,18 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
                                 {cartiProcesate.map((carte) => (
                                     <div key={carte._id} className="bg-gray-900 rounded-2xl shadow-lg hover:shadow-xl hover:shadow-blue-900/20 transition-all duration-300 overflow-hidden flex flex-col border border-gray-800 relative">
                                         
-                                        {/* Eticheta mica pt categorie pe poza */}
-                                        {carte.categorie && (
-                                            <span className="absolute top-3 left-3 bg-blue-600/90 text-white text-xs font-bold px-2.5 py-1 rounded-md z-10 backdrop-blur-sm shadow-sm">
-                                                {carte.categorie}
-                                            </span>
-                                        )}
-
                                         <div className="h-56 overflow-hidden">
                                             <img src={carte.imagine_url} alt={carte.titlu} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                                         </div>
+                                        
                                         <div className="p-5 flex flex-col flex-grow">
+                                            
+                                            <div className="mb-2">
+                                                <span className="bg-blue-900/40 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wide border border-blue-800/50">
+                                                    {carte.categorie || 'Fără categorie'}
+                                                </span>
+                                            </div>
+
                                             <h3 className="text-lg font-bold text-gray-100 mb-1 line-clamp-2">{carte.titlu}</h3>
                                             <p className="text-sm text-gray-400 mb-2">{carte.autor}</p>
                                             
@@ -391,12 +447,21 @@ function Home({ cos, setCos, arataCos, setArataCos }) {
                                                 <span className="text-xs font-medium bg-gray-800 text-gray-300 px-2 py-1 rounded-full border border-gray-700">Stoc: {carte.stoc}</span>
                                             </div>
                                             
-                                            <button 
-                                                onClick={() => adaugaInCos(carte)} 
-                                                className="w-full mt-4 bg-gray-800 hover:bg-blue-600 text-white border border-gray-700 hover:border-blue-600 font-semibold py-2.5 rounded-lg transition-colors"
-                                            >
-                                                Adaugă în coș
-                                            </button>
+                                          {carte.stoc > 0 ? (
+                                                <button 
+                                                    onClick={() => adaugaInCos(carte)} 
+                                                    className="w-full mt-4 bg-gray-800 hover:bg-blue-600 text-white border border-gray-700 hover:border-blue-600 font-semibold py-2.5 rounded-lg transition-colors"
+                                                >
+                                                    Adaugă în coș
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    disabled
+                                                    className="w-full mt-4 bg-red-900/40 text-red-400 border border-red-800 font-semibold py-2.5 rounded-lg cursor-not-allowed opacity-80"
+                                                >
+                                                    Stoc insuficient
+                                                </button>
+                                            )}
 
                                             {localStorage.getItem('rol') === 'admin' && (
                                                 <div className="flex gap-2 mt-2 pt-2 border-t border-gray-800">

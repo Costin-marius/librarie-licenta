@@ -36,7 +36,7 @@ function App() {
 
                         <div className="flex items-center gap-8">
                             <h1 className="text-2xl font-extrabold text-blue-400">
-                                📚 Librăria Ta
+                                📚 Librarie
                             </h1>
 
                             <div className="space-x-3">
@@ -49,7 +49,7 @@ function App() {
                                             : 'text-gray-400 hover:text-white hover:bg-gray-800'
                                     }`}
                                 >
-                                    🏠 Vitrină
+                                    🏠 Home Page
                                 </button>
 
                                 {rolUtilizator === 'admin' && (
