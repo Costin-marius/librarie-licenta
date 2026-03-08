@@ -1,22 +1,30 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-function Home() {
-    const [carti, setCarti] = useState([]);
+function Home({ cos, setCos, arataCos, setArataCos }) {
+    // ---- MEMORIA PAGINII (STATE-URI) ----
+    const [carti, setCarti] = useState([]); 
+    
+    // Formularul de Admin
     const [arataFormular, setArataFormular] = useState(false);
-    const [idEditare, setIdEditare] = useState(null);
+    const [idEditare, setIdEditare] = useState(null); 
     const [dateFormular, setDateFormular] = useState({
-        isbn: '', titlu: '', autor: '', editura: '', pret: '', stoc: '', imagine_url: ''
+        // Am adaugat 'categorie' aici
+        isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: ''
     });
 
-    // ==========================================
-    // STATE-URI PENTRU COȘ ȘI CHECKOUT
-    // ==========================================
-    const [cos, setCos] = useState([]); // Aici ținem cărțile reale adăugate
-    const [arataCos, setArataCos] = useState(false); // Afișăm sau ascundem interfața coșului
+    // Căutare, Filtrare și Sortare
+    const [termenCautare, setTermenCautare] = useState('');
+    const [categorieSelectata, setCategorieSelectata] = useState('Toate');
+    const [criteriuSortare, setCriteriuSortare] = useState('default'); // default, pretCresc, pretDesc, az, za
+
+    // Comandă
     const [metodaPlata, setMetodaPlata] = useState('ramburs'); 
     const [dateLivrare, setDateLivrare] = useState({ nume: '', adresa: '', telefon: '' });
 
+    // ---- FUNCȚII CARE SE EXECUTĂ LA ÎNCEPUT ----
     useEffect(() => {
         fetchCarti();
     }, []);
@@ -26,57 +34,54 @@ function Home() {
             const response = await axios.get('http://localhost:5000/api/carti');
             setCarti(response.data);
         } catch (error) {
-            console.error("Eroare la aducerea cărților:", error);
+            console.error("Eroare:", error);
+            toast.error("Nu am putut încărca cărțile.");
         }
     };
 
-    const handleDelogare = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('rol');
-        window.location.href = '/login';
-    };
-
-    // ==========================================
-    // FUNCȚII CRUD PENTRU ADMIN
-    // ==========================================
+    // ---- FUNCȚII PENTRU ADMIN ----
     const salveazaCarte = async (e) => {
         e.preventDefault(); 
         try {
             if (idEditare) {
                 await axios.put(`http://localhost:5000/api/carti/${idEditare}`, dateFormular);
-                alert('Cartea a fost actualizată cu succes!');
+                toast.success('Cartea a fost actualizată!');
             } else {
                 await axios.post('http://localhost:5000/api/carti', dateFormular);
-                alert('Cartea a fost adăugată cu succes!');
+                toast.success('Cartea a fost adăugată!');
             }
-            setDateFormular({ isbn: '', titlu: '', autor: '', editura: '', pret: '', stoc: '', imagine_url: '' }); 
-            setIdEditare(null);
-            setArataFormular(false); 
-            fetchCarti(); 
+            anuleazaFormular(); 
+            fetchCarti();       
         } catch (error) {
-            alert('Eroare la salvarea cărții!');
+            toast.error('Eroare la salvare!');
         }
     };
 
     const deschideEditare = (carte) => {
         setDateFormular({
-            isbn: carte.isbn, titlu: carte.titlu, autor: carte.autor, editura: carte.editura, pret: carte.pret, stoc: carte.stoc, imagine_url: carte.imagine_url
+            isbn: carte.isbn, 
+            titlu: carte.titlu, 
+            autor: carte.autor, 
+            editura: carte.editura, 
+            categorie: carte.categorie || '', // ne asiguram ca nu pica daca vechile carti nu au categorie
+            pret: carte.pret, 
+            stoc: carte.stoc, 
+            imagine_url: carte.imagine_url
         });
         setIdEditare(carte._id); 
         setArataFormular(true);  
-        setArataCos(false); // Ascundem coșul dacă adminul vrea să editeze
+        setArataCos(false); 
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
     };
 
     const stergeCarte = async (id) => {
-        const confirmare = window.confirm("Ești sigur că vrei să ștergi această carte?");
-        if (confirmare) {
+        if (window.confirm("Ești sigur că vrei să ștergi această carte?")) {
             try {
                 await axios.delete(`http://localhost:5000/api/carti/${id}`);
-                alert("Cartea a fost ștearsă!");
+                toast.success("Cartea a fost ștearsă!");
                 fetchCarti(); 
             } catch (error) {
-                alert("Eroare la ștergerea cărții!");
+                toast.error("Eroare la ștergere!");
             }
         }
     };
@@ -84,12 +89,10 @@ function Home() {
     const anuleazaFormular = () => {
         setArataFormular(false);
         setIdEditare(null);
-        setDateFormular({ isbn: '', titlu: '', autor: '', editura: '', pret: '', stoc: '', imagine_url: '' });
+        setDateFormular({ isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: '' });
     };
 
-    // ==========================================
-    // FUNCȚII PENTRU COȘ ȘI COMANDĂ
-    // ==========================================
+    // ---- FUNCȚII PENTRU COȘUL DE CUMPĂRĂTURI ----
     const adaugaInCos = (carte) => {
         const existaInCos = cos.find(item => item._id === carte._id);
         if (existaInCos) {
@@ -97,205 +100,322 @@ function Home() {
         } else {
             setCos([...cos, { ...carte, cantitate: 1 }]);
         }
-        alert(`"${carte.titlu}" a fost adăugată în coș!`);
+        toast.success(`"${carte.titlu}" a fost adăugată în coș!`);
+    };
+
+    const modificaCantitate = (id, delta) => {
+        setCos(cos.map(item => {
+            if (item._id === id) {
+                const nouaCantitate = item.cantitate + delta;
+                return { ...item, cantitate: nouaCantitate > 0 ? nouaCantitate : 1 };
+            }
+            return item;
+        }));
     };
 
     const eliminaDinCos = (id) => {
         setCos(cos.filter(item => item._id !== id));
+        toast.error('Produs eliminat din coș.');
     };
 
-    // Calculăm totalul real pe baza produselor din coș
     const totalCos = cos.reduce((total, item) => total + (item.pret * item.cantitate), 0);
 
+    // ---- PLASAREA COMENZII ----
     const plaseazaComanda = async (e) => {
         e.preventDefault();
-        
-        // 1. Pregătim datele exact așa cum le așteaptă backend-ul
         const dateComanda = {
             dateLivrare,
             metodaPlata,
-            total: totalCos,
+            total: Number(totalCos.toFixed(2)), 
             produse: cos.map(item => ({
-                carteId: item._id, // Avem nevoie de ID-ul real al cărții pentru a scădea stocul
-                titlu: item.titlu,
-                cantitate: item.cantitate,
-                pret: item.pret
+                carteId: item._id, titlu: item.titlu, cantitate: item.cantitate, pret: item.pret
             }))
         };
 
         try {
-            // 2. Trimitem comanda către serverul nostru de backend
             await axios.post('http://localhost:5000/api/comenzi', dateComanda);
-
-            alert(`🎉 Comanda a fost plasată cu succes!\n\nMulțumim, ${dateLivrare.nume}!\nTotal de plată: ${totalCos} RON.\n${metodaPlata === 'card' ? 'Plătit online cu cardul.' : 'Plata ramburs la curier.'}`);
-            
-            // 3. Curățăm interfața
+            toast.success(`Comanda plasată cu succes!`);
             setCos([]);
             setDateLivrare({ nume: '', adresa: '', telefon: '' });
             setArataCos(false);
-            
-            // 4. Micul nostru truc: Reîncărcăm lista de cărți de pe server 
-            // ca să vedem instant cum a scăzut stocul pe ecran!
             fetchCarti(); 
-
         } catch (error) {
-            console.error("Eroare:", error);
-            alert("A apărut o eroare la plasarea comenzii. Te rugăm să încerci din nou.");
+            toast.error("Eroare la plasarea comenzii.");
         }
     };
 
+    // ---- LOGICĂ DE FILTRARE ȘI SORTARE ----
+    
+    // 1. Extragem toate categoriile unice din cartile pe care le avem (eliminam undefined/gol)
+    const categoriiDisponibile = ['Toate', ...new Set(carti.map(c => c.categorie).filter(cat => cat && cat.trim() !== ''))];
+
+    // 2. Aplicam Filtrele (Cautare text + Categorie selectata)
+    let cartiProcesate = carti.filter(carte => {
+        const textDeCautat = `${carte.titlu} ${carte.autor} ${carte.isbn}`.toLowerCase();
+        const sePotrivesteCautarea = textDeCautat.includes(termenCautare.toLowerCase());
+        const sePotrivesteCategoria = categorieSelectata === 'Toate' || carte.categorie === categorieSelectata;
+        
+        return sePotrivesteCautarea && sePotrivesteCategoria;
+    });
+
+    // 3. Aplicam Sortarea
+    if (criteriuSortare === 'pretCresc') {
+        cartiProcesate.sort((a, b) => a.pret - b.pret);
+    } else if (criteriuSortare === 'pretDesc') {
+        cartiProcesate.sort((a, b) => b.pret - a.pret);
+    } else if (criteriuSortare === 'az') {
+        cartiProcesate.sort((a, b) => a.titlu.localeCompare(b.titlu));
+    } else if (criteriuSortare === 'za') {
+        cartiProcesate.sort((a, b) => b.titlu.localeCompare(a.titlu));
+    }
+
+
+    // ================= INTERFAȚA =================
     return (
-        <div style={{ padding: '20px', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-            {/* HEADER-UL */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h1 style={{ cursor: 'pointer', color: '#222' }} onClick={() => setArataCos(false)}>📚 Librăria Ta</h1>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    
-                    {/* BUTON COȘ PENTRU TOȚI UTILIZATORII */}
-                    <button onClick={() => { setArataCos(!arataCos); setArataFormular(false); }} style={{ padding: '10px 20px', backgroundColor: '#17a2b8', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
-                        🛒 Coșul meu ({cos.length})
-                    </button>
+        <div className="flex-1 w-full bg-gray-950 text-gray-200 p-8 font-sans overflow-auto">
+            <ToastContainer position="top-right" autoClose={3000} theme="dark" />
 
-                    {/* BUTON ADMIN */}
-                    {localStorage.getItem('rol') === 'admin' && (
-                        <button onClick={() => { arataFormular ? anuleazaFormular() : setArataFormular(true); setArataCos(false); }} style={{ padding: '10px 20px', backgroundColor: '#ffc107', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', color: '#222' }}>
-                            {arataFormular ? 'Ascunde Formular' : '➕ Adaugă Carte'}
-                        </button>
-                    )}
-                    
-                    <button onClick={handleDelogare} style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-                        Delogare
-                    </button>   
-                </div>
-            </div>
-
-            {/* FORMULARUL DE ADMIN (CRUD) - Apare doar dacă ești Admin și apeși Adaugă/Editează */}
-            {arataFormular && !arataCos && (
-                <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '10px', marginBottom: '30px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
-                    <h3 style={{ color: '#222' }}>{idEditare ? '✏️ Editează detaliile cărții' : 'Adaugă o carte în magazin'}</h3>
-                    <form onSubmit={salveazaCarte} style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                        <input type="text" placeholder="ISBN" required value={dateFormular.isbn} onChange={(e) => setDateFormular({...dateFormular, isbn: e.target.value})} style={{ padding: '8px', width: 'calc(33% - 10px)' }}/>
-                        <input type="text" placeholder="Titlu" required value={dateFormular.titlu} onChange={(e) => setDateFormular({...dateFormular, titlu: e.target.value})} style={{ padding: '8px', width: 'calc(33% - 10px)' }}/>
-                        <input type="text" placeholder="Autor" required value={dateFormular.autor} onChange={(e) => setDateFormular({...dateFormular, autor: e.target.value})} style={{ padding: '8px', width: 'calc(33% - 10px)' }}/>
-                        <input type="text" placeholder="Editură" required value={dateFormular.editura} onChange={(e) => setDateFormular({...dateFormular, editura: e.target.value})} style={{ padding: '8px', width: 'calc(33% - 10px)' }}/>
-                        <input type="number" placeholder="Preț (RON)" required value={dateFormular.pret} onChange={(e) => setDateFormular({...dateFormular, pret: e.target.value})} style={{ padding: '8px', width: 'calc(33% - 10px)' }}/>
-                        <input type="number" placeholder="Stoc (Buc)" required value={dateFormular.stoc} onChange={(e) => setDateFormular({...dateFormular, stoc: e.target.value})} style={{ padding: '8px', width: 'calc(33% - 10px)' }}/>
-                        <input type="text" placeholder="Link Imagine (ex: https://...)" required value={dateFormular.imagine_url} onChange={(e) => setDateFormular({...dateFormular, imagine_url: e.target.value})} style={{ padding: '8px', width: '100%' }}/>
+            <div className="max-w-7xl mx-auto">
+                
+                {/* --- BARA DE CĂUTARE ȘI BUTONUL ADMIN --- */}
+                {!arataCos && !arataFormular && (
+                    <div className="mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
                         
-                        <button type="submit" style={{ padding: '10px 20px', backgroundColor: idEditare ? '#007bff' : '#28a745', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginTop: '10px' }}>
-                            {idEditare ? 'Salvează Modificările' : 'Salvează Cartea'}
-                        </button>
-                        {idEditare && (
-                            <button type="button" onClick={anuleazaFormular} style={{ padding: '10px 20px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginTop: '10px', marginLeft: '10px' }}>
-                                Anulează
+                        <div className="relative w-full max-w-2xl mx-auto">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span className="text-gray-400 text-lg">🔍</span>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Caută după titlu, autor sau ISBN..."
+                                value={termenCautare}
+                                onChange={(e) => setTermenCautare(e.target.value)}
+                                className="block w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-800 rounded-xl text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-lg transition-all"
+                            />
+                        </div>
+
+                        {localStorage.getItem('rol') === 'admin' && (
+                            <button 
+                                onClick={() => { setArataFormular(true); setArataCos(false); }} 
+                                className="bg-amber-600 hover:bg-amber-500 text-white px-5 py-3 rounded-xl font-semibold transition shadow-lg whitespace-nowrap"
+                            >
+                                ➕ Adaugă Carte
                             </button>
                         )}
-                    </form>
-                </div>
-            )}
+                    </div>
+                )}
 
-            {/* ========================================== */}
-            {/* INTERFAȚA DE CHECKOUT (Când apeși pe Coș)  */}
-            {/* ========================================== */}
-            {arataCos ? (
-                <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
-                    <h2 style={{ color: '#222', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>🛒 Finalizare Comandă</h2>
-                    
-                    {cos.length === 0 ? (
-                        <p style={{ color: '#555', fontSize: '18px' }}>Coșul tău este gol. Întoarce-te la magazin și adaugă câteva cărți!</p>
-                    ) : (
-                        <div style={{ display: 'flex', gap: '40px', marginTop: '20px', flexWrap: 'wrap' }}>
-                            {/* PARTEA STÂNGĂ: Produsele reale din coș */}
-                            <div style={{ flex: '1 1 300px' }}>
-                                <h3 style={{ color: '#222' }}>Produsele tale:</h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    {cos.map((item, index) => (
-                                        <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px' }}>
-                                            <div>
-                                                <strong style={{ color: '#222' }}>{item.titlu}</strong> <br/>
-                                                <span style={{ color: '#666' }}>{item.pret} RON x {item.cantitate} buc.</span>
-                                            </div>
-                                            <button onClick={() => eliminaDinCos(item._id)} style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>❌ Șterge</button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <h2 style={{ color: '#28a745', marginTop: '20px', textAlign: 'right' }}>Total: {totalCos} RON</h2>
-                            </div>
-
-                            {/* PARTEA DREAPTĂ: Formularul de comandă și plată */}
-                            <div style={{ flex: '1 1 300px', backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
-                                <h3 style={{ color: '#222', marginTop: 0 }}>Date Livrare</h3>
-                                <form onSubmit={plaseazaComanda} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                    <input type="text" placeholder="Numele Complet" required value={dateLivrare.nume} onChange={e => setDateLivrare({...dateLivrare, nume: e.target.value})} style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }} />
-                                    <input type="text" placeholder="Adresa completă de livrare" required value={dateLivrare.adresa} onChange={e => setDateLivrare({...dateLivrare, adresa: e.target.value})} style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }} />
-                                    <input type="tel" placeholder="Număr de telefon" required value={dateLivrare.telefon} onChange={e => setDateLivrare({...dateLivrare, telefon: e.target.value})} style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }} />
-                                    
-                                    <h3 style={{ color: '#222', marginBottom: '5px', marginTop: '10px' }}>Metoda de Plată</h3>
-                                    <div style={{ display: 'flex', gap: '20px' }}>
-                                        <label style={{ color: '#333', cursor: 'pointer' }}>
-                                            <input type="radio" name="plata" value="ramburs" checked={metodaPlata === 'ramburs'} onChange={() => setMetodaPlata('ramburs')} /> Ramburs la curier
-                                        </label>
-                                        <label style={{ color: '#333', cursor: 'pointer' }}>
-                                            <input type="radio" name="plata" value="card" checked={metodaPlata === 'card'} onChange={() => setMetodaPlata('card')} /> Plata cu Cardul
-                                        </label>
-                                    </div>
-
-                                    {/* MOCK-UP PENTRU CARD (Apare doar dacă alegi "Plata cu Cardul") */}
-                                    {metodaPlata === 'card' && (
-                                        <div style={{ backgroundColor: '#fff', padding: '15px', borderRadius: '5px', border: '1px solid #007bff', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                                            <p style={{ margin: 0, color: '#007bff', fontSize: '14px', fontWeight: 'bold' }}>💳 Plată Securizată</p>
-                                            <input type="text" placeholder="Număr Card (ex: 4111 1111 1111 1111)" required={metodaPlata === 'card'} style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '3px' }}/>
-                                            <div style={{ display: 'flex', gap: '10px' }}>
-                                                <input type="text" placeholder="Lună/An (LL/AA)" required={metodaPlata === 'card'} style={{ flex: 1, padding: '8px', border: '1px solid #ddd', borderRadius: '3px' }}/>
-                                                <input type="text" placeholder="CVV" required={metodaPlata === 'card'} style={{ width: '80px', padding: '8px', border: '1px solid #ddd', borderRadius: '3px' }}/>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <button type="submit" style={{ padding: '15px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px' }}>
-                                        ✅ Finalizează Comanda
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            ) : (
-                /* ========================================== */
-                /* LISTA DE CĂRȚI (Pagina principală)         */
-                /* ========================================== */
-                <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                    {carti.map((carte) => (
-                        <div key={carte._id} style={{ border: '1px solid #ddd', borderRadius: '10px', padding: '15px', width: '250px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)', textAlign: 'left', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
-                            <img src={carte.imagine_url} alt={carte.titlu} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '5px' }} />
-                            <h3 style={{ fontSize: '18px', margin: '10px 0', color: '#222' }}>{carte.titlu}</h3>
-                            <p style={{ margin: '5px 0', color: '#555' }}><strong>Autor:</strong> {carte.autor}</p>
-                            <p style={{ margin: '5px 0', color: '#555' }}><strong>Editură:</strong> {carte.editura}</p>
-                            <p style={{ margin: '5px 0', color: '#555' }}><strong>Stoc:</strong> {carte.stoc} buc.</p>
-                            <h2 style={{ color: '#28a745', marginTop: '15px' }}>{carte.pret} RON</h2>
-                            
-                            <div style={{ marginTop: 'auto' }}>
-                                {/* BUTON REAL DE ADĂUGARE ÎN COȘ */}
-                                <button onClick={() => adaugaInCos(carte)} style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginTop: '10px', fontWeight: 'bold' }}>
-                                    Adaugă în coș
+                {/* --- MENIU FILTRĂRI ȘI SORTARE --- */}
+                {!arataCos && !arataFormular && (
+                    <div className="flex flex-col md:flex-row gap-4 mb-10 justify-between items-center bg-gray-900 p-4 rounded-xl border border-gray-800">
+                        
+                        {/* Butoane Categorii */}
+                        <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0" style={{ scrollbarWidth: 'none' }}>
+                            {categoriiDisponibile.map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setCategorieSelectata(cat)}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                                        categorieSelectata === cat 
+                                        ? 'bg-blue-600 text-white' 
+                                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white border border-gray-700'
+                                    }`}
+                                >
+                                    {cat}
                                 </button>
-
-                                {/* BUTOANE ADMIN (Editare / Ștergere) */}
-                                {localStorage.getItem('rol') === 'admin' && (
-                                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                        <button onClick={() => deschideEditare(carte)} style={{ flex: 1, padding: '10px', backgroundColor: '#ffc107', color: '#222', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
-                                            ✏️ Editează
-                                        </button>
-                                        <button onClick={() => stergeCarte(carte._id)} style={{ flex: 1, padding: '10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
-                                            🗑️ Șterge
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            )}
+
+                        {/* Select Sortare */}
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            <span className="text-gray-400 text-sm whitespace-nowrap">Sortează:</span>
+                            <select
+                                value={criteriuSortare}
+                                onChange={(e) => setCriteriuSortare(e.target.value)}
+                                className="bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 outline-none cursor-pointer"
+                            >
+                                <option value="default">Relevanță</option>
+                                <option value="pretCresc">Preț: Crescător</option>
+                                <option value="pretDesc">Preț: Descrescător</option>
+                                <option value="az">Titlu: A - Z</option>
+                                <option value="za">Titlu: Z - A</option>
+                            </select>
+                        </div>
+                    </div>
+                )}
+
+
+                {/* --- FORMULARUL PENTRU ADMIN --- */}
+                {arataFormular && !arataCos && (
+                    <div className="bg-gray-900 p-8 rounded-2xl shadow-lg mb-10 border border-gray-800">
+                        <h3 className="text-xl font-bold mb-6 text-gray-100 border-b border-gray-700 pb-3">
+                            {idEditare ? '✏️ Editează detaliile cărții' : '➕ Adaugă o carte nouă'}
+                        </h3>
+                        <form onSubmit={salveazaCarte} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {/* Am adaugat 'categorie' in lista de input-uri text */}
+                            {['isbn', 'titlu', 'autor', 'editura', 'categorie'].map(camp => (
+                                <input key={camp} type="text" placeholder={camp.charAt(0).toUpperCase() + camp.slice(1)} required value={dateFormular[camp]} onChange={(e) => setDateFormular({...dateFormular, [camp]: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                            ))}
+                            <input type="number" placeholder="Preț (RON)" required value={dateFormular.pret} onChange={(e) => setDateFormular({...dateFormular, pret: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                            <input type="number" placeholder="Stoc (Buc)" required value={dateFormular.stoc} onChange={(e) => setDateFormular({...dateFormular, stoc: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                            <input type="text" placeholder="Link Imagine" required value={dateFormular.imagine_url} onChange={(e) => setDateFormular({...dateFormular, imagine_url: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none lg:col-span-2"/>
+                            
+                            <div className="lg:col-span-3 flex gap-3 mt-2">
+                                <button type="submit" className={`px-6 py-2.5 rounded-lg font-bold text-white transition ${idEditare ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'}`}>
+                                    {idEditare ? 'Salvează Modificările' : 'Salvează Cartea'}
+                                </button>
+                                <button type="button" onClick={anuleazaFormular} className="px-6 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg font-medium transition">
+                                    Anulează
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+                {/* --- ZONA DE FINALIZARE COMANDĂ --- */}
+                {arataCos ? (
+                    <div className="bg-gray-900 p-8 rounded-2xl shadow-lg border border-gray-800">
+                        <div className="flex justify-between items-center border-b border-gray-700 pb-4 mb-6">
+                            <h2 className="text-2xl font-bold text-gray-100">🛒 Finalizare Comandă</h2>
+                            <button onClick={() => setArataCos(false)} className="text-gray-400 hover:text-white transition">Înapoi la magazin</button>
+                        </div>
+                        
+                        {cos.length === 0 ? (
+                            <div className="text-center py-10">
+                                <p className="text-gray-400 text-lg mb-4">Coșul tău este gol.</p>
+                                <button onClick={() => setArataCos(false)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                                    Întoarce-te la magazin
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                {/* Lista Produse */}
+                                <div>
+                                    <h3 className="text-xl font-semibold mb-4 text-gray-300">Produsele tale</h3>
+                                    <div className="space-y-4">
+                                        {cos.map((item, index) => (
+                                            <div key={index} className="flex justify-between items-center bg-gray-800 p-4 rounded-lg border border-gray-700">
+                                                <div className="flex-1">
+                                                    <strong className="text-gray-200 block">{item.titlu}</strong>
+                                                    <span className="text-gray-400 text-sm">{item.pret} RON / buc.</span>
+                                                </div>
+                                                <div className="flex items-center gap-3 mx-4">
+                                                    <button onClick={() => modificaCantitate(item._id, -1)} className="bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded flex items-center justify-center font-bold">-</button>
+                                                    <span className="font-bold text-lg w-4 text-center">{item.cantitate}</span>
+                                                    <button onClick={() => modificaCantitate(item._id, 1)} className="bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded flex items-center justify-center font-bold">+</button>
+                                                </div>
+                                                <button onClick={() => eliminaDinCos(item._id)} className="text-red-400 hover:text-red-300 p-2 transition">
+                                                    ❌
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-6 text-right">
+                                        <span className="text-gray-400 text-lg mr-2">Total de plată:</span>
+                                        <span className="text-3xl font-bold text-green-400">{totalCos.toFixed(2)} RON</span>
+                                    </div>
+                                </div>
+
+                                {/* Formular Livrare */}
+                                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-fit">
+                                    <h3 className="text-xl font-semibold mb-4 text-gray-200">Detalii Livrare & Plată</h3>
+                                    <form onSubmit={plaseazaComanda} className="space-y-4">
+                                        <input type="text" placeholder="Numele Complet" required value={dateLivrare.nume} onChange={e => setDateLivrare({...dateLivrare, nume: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                                        <input type="text" placeholder="Adresa completă de livrare" required value={dateLivrare.adresa} onChange={e => setDateLivrare({...dateLivrare, adresa: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                                        <input type="tel" placeholder="Număr de telefon" required value={dateLivrare.telefon} onChange={e => setDateLivrare({...dateLivrare, telefon: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                                        
+                                        <div className="pt-4">
+                                            <h4 className="font-medium text-gray-300 mb-3">Metoda de Plată</h4>
+                                            <div className="flex gap-6">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input type="radio" name="plata" value="ramburs" checked={metodaPlata === 'ramburs'} onChange={() => setMetodaPlata('ramburs')} className="w-4 h-4 text-blue-600 bg-gray-900 border-gray-600" /> 
+                                                    <span className="text-gray-300">Ramburs</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input type="radio" name="plata" value="card" checked={metodaPlata === 'card'} onChange={() => setMetodaPlata('card')} className="w-4 h-4 text-blue-600 bg-gray-900 border-gray-600" /> 
+                                                    <span className="text-gray-300">Card bancar</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {metodaPlata === 'card' && (
+                                            <div className="bg-gray-900 p-5 rounded-xl border border-gray-700 shadow-inner mt-4 space-y-4">
+                                                <p className="text-blue-400 text-sm font-bold flex items-center gap-2">💳 Plată Securizată</p>
+                                                <input type="text" placeholder="Număr Card (ex: 4111 2222 3333 4444)" required={metodaPlata === 'card'} className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                                                <div className="flex gap-4">
+                                                    <input type="text" placeholder="LL/AA" required={metodaPlata === 'card'} className="w-1/2 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                                                    <input type="text" placeholder="CVV" required={metodaPlata === 'card'} className="w-1/2 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <button type="submit" className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-md text-lg">
+                                            ✅ Finalizează Comanda
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    /* --- GRILA CU CĂRȚI (Folosim cartiProcesate acum) --- */
+                    <>
+                        {cartiProcesate.length === 0 ? (
+                            <div className="text-center py-16">
+                                <p className="text-2xl text-gray-500 mb-2">😕 Nu am găsit nicio carte care să corespundă criteriilor.</p>
+                                <button onClick={() => {setTermenCautare(''); setCategorieSelectata('Toate');}} className="mt-4 text-blue-400 hover:text-blue-300 underline">
+                                    Resetează filtrele
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                                {cartiProcesate.map((carte) => (
+                                    <div key={carte._id} className="bg-gray-900 rounded-2xl shadow-lg hover:shadow-xl hover:shadow-blue-900/20 transition-all duration-300 overflow-hidden flex flex-col border border-gray-800 relative">
+                                        
+                                        {/* Eticheta mica pt categorie pe poza */}
+                                        {carte.categorie && (
+                                            <span className="absolute top-3 left-3 bg-blue-600/90 text-white text-xs font-bold px-2.5 py-1 rounded-md z-10 backdrop-blur-sm shadow-sm">
+                                                {carte.categorie}
+                                            </span>
+                                        )}
+
+                                        <div className="h-56 overflow-hidden">
+                                            <img src={carte.imagine_url} alt={carte.titlu} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                                        </div>
+                                        <div className="p-5 flex flex-col flex-grow">
+                                            <h3 className="text-lg font-bold text-gray-100 mb-1 line-clamp-2">{carte.titlu}</h3>
+                                            <p className="text-sm text-gray-400 mb-2">{carte.autor}</p>
+                                            
+                                            <div className="mt-auto pt-4 flex items-center justify-between">
+                                                <span className="text-2xl font-black text-blue-400">{carte.pret} lei</span>
+                                                <span className="text-xs font-medium bg-gray-800 text-gray-300 px-2 py-1 rounded-full border border-gray-700">Stoc: {carte.stoc}</span>
+                                            </div>
+                                            
+                                            <button 
+                                                onClick={() => adaugaInCos(carte)} 
+                                                className="w-full mt-4 bg-gray-800 hover:bg-blue-600 text-white border border-gray-700 hover:border-blue-600 font-semibold py-2.5 rounded-lg transition-colors"
+                                            >
+                                                Adaugă în coș
+                                            </button>
+
+                                            {localStorage.getItem('rol') === 'admin' && (
+                                                <div className="flex gap-2 mt-2 pt-2 border-t border-gray-800">
+                                                    <button onClick={() => deschideEditare(carte)} className="flex-1 bg-amber-900/40 hover:bg-amber-800/60 text-amber-400 py-1.5 rounded-md text-sm font-medium transition">
+                                                        ✏️ Edit
+                                                    </button>
+                                                    <button onClick={() => stergeCarte(carte._id)} className="flex-1 bg-red-900/40 hover:bg-red-800/60 text-red-400 py-1.5 rounded-md text-sm font-medium transition">
+                                                        🗑️ Șterge
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
         </div>
     );
 }
