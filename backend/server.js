@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 const cartiRoutes = require('./routes/carti');
+const cosRoutes = require('./routes/cos');
 // Inițializam aplicația Express
 const app = express();
 
@@ -15,6 +16,8 @@ const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 app.use('/api/carti', cartiRoutes);
 app.use('/api/comenzi', require('./routes/comenzi'));
+app.use('/api/user', require('./routes/user'));
+app.use('/api/cos', cosRoutes);
 
 // Conectarea la baza de date
 mongoose.connect(process.env.MONGO_URI)

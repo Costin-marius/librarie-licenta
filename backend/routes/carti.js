@@ -11,6 +11,22 @@ router.get('/', async (req, res) => {
         res.status(500).json({ mesaj: 'Eroare la extragerea cărților' });
     }
 });
+// Rută pentru a extrage o singură carte pe baza ID-ului pentru pagina de detalii
+router.get('/:id', async (req, res) => {
+    try {
+        const carte = await Carte.findById(req.params.id);
+        
+        // Verificăm dacă cartea există în baza de date
+        if (!carte) {
+            return res.status(404).json({ mesaj: 'Cartea nu a fost găsită!' });
+        }
+        
+        // Trimitem datele cărții către frontend
+        res.json(carte);
+    } catch (eroare) {
+        res.status(500).json({ mesaj: 'Eroare la extragerea detaliilor cărții', eroare });
+    }
+});
 //adăugarea unei cărți noi din formular
 router.post('/', async (req, res) => {
     try {
@@ -67,8 +83,8 @@ router.put('/:id', async (req, res) => {
         const carteActualizata = await Carte.findByIdAndUpdate(
             req.params.id, 
             req.body, 
-            { new: true } // Îi spunem să ne returneze varianta nouă, actualizată
-        );
+            { returnDocument: 'after' } // Îi spunem să ne returneze varianta nouă, actualizată
+        );  
         if (!carteActualizata) {
             return res.status(404).json({ mesaj: 'Cartea nu a fost găsită!' });
         }

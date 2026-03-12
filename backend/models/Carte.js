@@ -27,13 +27,32 @@ const carteSchema = new mongoose.Schema({
         required: true,
         default: 0
     },
-    categorie: 
-    { type: String, 
-    required: false },
-    
+    categorie: { 
+        type: String, 
+        required: false 
+    },
     imagine_url: {
         type: String,
         default: 'https://via.placeholder.com/150'
+    },
+    // --- CÂMPURILE NOI ---
+    descriere: {
+        type: String,
+        required: false, 
+        default: "Descrierea nu este disponibilă momentan."
+    },
+    limba: {
+        type: String,
+        required: false,
+        default: "Romana"
+    },
+    anPublicare: {
+        type: Number,
+        required: false
+    },
+    nrPagini: {
+        type: Number,
+        required: false
     }
 }, { timestamps: true });
 

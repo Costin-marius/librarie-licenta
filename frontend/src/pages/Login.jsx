@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Am adaugat setRolUtilizator si setVizualizare ca props
-function Login({ setRolUtilizator, setVizualizare }) {
+function Login({ setRolUtilizator, setVizualizare , setNumeUtilizator}) {
     const [isLogin, setIsLogin] = useState(true);
     const [dateFormular, setDateFormular] = useState({ email: '', parola: '', nume: '' });
 
@@ -23,9 +23,13 @@ function Login({ setRolUtilizator, setVizualizare }) {
                 
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('rol', response.data.rol || 'user');
+                localStorage.setItem('nume', response.data.nume || ''); // Salvăm în browser
+    if(setNumeUtilizator) setNumeUtilizator(response.data.nume || '')
+    
                 
                 // Actualizam starea in App.jsx imediat
                 if(setRolUtilizator) setRolUtilizator(response.data.rol || 'user');
+                if(setNumeUtilizator) setNumeUtilizator(response.data.nume || '')
 
                 toast.success('Te-ai autentificat!');
                 
