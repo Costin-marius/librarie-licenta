@@ -3,10 +3,19 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// NOU: Importăm librăriile pentru fundalul animat
+import Particles from "react-tsparticles";
+import { loadFull } from "tsparticles";
+
 // Am adaugat setRolUtilizator si setVizualizare ca props
 function Login({ setRolUtilizator, setVizualizare , setNumeUtilizator}) {
     const [isLogin, setIsLogin] = useState(true);
     const [dateFormular, setDateFormular] = useState({ email: '', parola: '', nume: '' });
+
+    // NOU: Funcția care inițializează particulele de pe fundal
+    const particlesInit = async (main) => {
+        await loadFull(main);
+    };
 
     const handleInput = (e) => {
         setDateFormular({ ...dateFormular, [e.target.name]: e.target.value });
@@ -24,12 +33,11 @@ function Login({ setRolUtilizator, setVizualizare , setNumeUtilizator}) {
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('rol', response.data.rol || 'user');
                 localStorage.setItem('nume', response.data.nume || ''); // Salvăm în browser
-    if(setNumeUtilizator) setNumeUtilizator(response.data.nume || '')
-    
+                
+                if(setNumeUtilizator) setNumeUtilizator(response.data.nume || '');
                 
                 // Actualizam starea in App.jsx imediat
                 if(setRolUtilizator) setRolUtilizator(response.data.rol || 'user');
-                if(setNumeUtilizator) setNumeUtilizator(response.data.nume || '')
 
                 toast.success('Te-ai autentificat!');
                 
@@ -50,13 +58,59 @@ function Login({ setRolUtilizator, setVizualizare , setNumeUtilizator}) {
     };
 
     return (
-        /* w-full h-full si items-center justify-center ca sa stea pe mijlocul ecranului */
-        <div className="w-full h-full flex items-center justify-center bg-gray-950 px-4">
+        <div className="min-h-screen w-full flex items-center justify-center bg-gray-950 px-4 relative overflow-hidden">
+            
+            {/*Componenta de particule pentru fundal */}
+            <Particles
+                id="tsparticles"
+                init={particlesInit}
+                options={{
+                    fullScreen: { enable: true, zIndex: 0 },
+                    background: { color: { value: "#030712" } },
+                    fpsLimit: 120,
+                    interactivity: {
+                        events: {
+                            onHover: { enable: true, mode: "repulse" },
+                            resize: true,
+                        },
+                    },
+                    particles: {
+                        color: { value: "#60a5fa" }, 
+                        links: {
+                            color: "#60a5fa",
+                            distance: 150,
+                            enable: true,
+                            opacity: 0.2,
+                            width: 1,
+                        },
+                        collisions: { enable: true },
+                        move: {
+                            directions: "none",
+                            enable: true,
+                            outModes: { default: "bounce" },
+                            random: false,
+                            speed: 1,
+                            straight: false,
+                        },
+                        number: {
+                            density: { enable: true, area: 800 },
+                            value: 60, // Numărul de particule
+                        },
+                        opacity: { value: 0.3 },
+                        shape: { type: "circle" },
+                        size: { value: { min: 1, max: 3 } },
+                    },
+                    detectRetina: true,
+                }}
+                className="absolute inset-0 z-0"
+            />
+
             <ToastContainer position="top-right" autoClose={3000} theme="dark" />
 
-            <div className="max-w-md w-full bg-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-800">
+            {/*Am adăugat z-10, relative și backdrop-blur ca să iasă în evidență peste particule */}
+            <div className="max-w-md w-full bg-gray-900/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-gray-800 relative z-10">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-extrabold text-blue-400 mb-2">📚 Librăria Ta</h1>
+                    <h1 className="text-4xl font-extrabold text-blue-400 mb-2">📚 InkWell</h1>
                     <p className="text-gray-400">
                         {isLogin ? 'Bine ai revenit!' : 'Creează un cont nou.'}
                     </p>

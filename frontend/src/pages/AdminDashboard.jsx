@@ -95,7 +95,7 @@ function AdminDashboard() {
             <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col hidden md:flex">
                 <div className="p-6 border-b border-gray-800">
                     <h2 className="text-2xl font-black text-blue-400">AdminPanel</h2>
-                    <p className="text-xs text-gray-500 mt-1">Librăria Ta - Gestiune</p>
+                    <p className="text-xs text-gray-500 mt-1"> Gestiune </p>
                 </div>
                 
                 <nav className="flex-1 p-4 space-y-2">

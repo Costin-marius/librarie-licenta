@@ -1,70 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify'; // Am adăugat ToastContainer
+import 'react-toastify/dist/ReactToastify.css';
 
-function DetaliiCarte() {
-    // 1. Luăm ID-ul cărții pe care am dat click. 
-    // Dacă link-ul este site.ro/carte/123, 'id' va fi '123'
+
+function DetaliiCarte({ cos, setCos }) {
     const { id } = useParams(); 
-    
-    // 2. Aici pregătim niște "cutiuțe" în memorie unde vom păstra informații:
-    // 'carte' va ține datele venite de la server. La început e goală (null).
     const [carte, setCarte] = useState(null);
-    // 'loading' ne spune dacă încă așteptăm datele de la server. La început e 'true' (da, așteptăm).
     const [loading, setLoading] = useState(true);
+    
+    
+    const [inWishlist, setInWishlist] = useState(false);
 
-    // 3. useEffect este ca un asistent care face o treabă imediat cum se deschide pagina.
-    // Aici asistentul nostru se duce la backend să aducă detaliile cărții.
     useEffect(() => {
-        // Trimitem "curierul" la adresa serverului tău
         fetch(`http://localhost:5000/api/carti/${id}`)
             .then(response => {
                 if (!response.ok) throw new Error("Cartea nu a fost găsită pe server");
-                return response.json(); // Desfacem pachetul primit (datele în format JSON)
+                return response.json();
             })
             .then(data => {
-                setCarte(data); // Punem datele primite în cutiuța 'carte'
-                setLoading(false); // Îi spunem site-ului că nu mai așteptăm, am primit datele!
+                setCarte(data);
+                setLoading(false);
             })
             .catch(error => {
                 console.error("Eroare:", error);
-                setLoading(false); // Chiar dacă e eroare, oprim animația de încărcare
+                setLoading(false);
             });
-    }, [id]); // [id] înseamnă: "Fă chestia asta de fiecare dată când se schimbă ID-ul din link"
+    }, [id]);
 
-    // --- MAGIA PENTRU BUTONUL DE COȘ ---
+  
     const apasaAdaugaInCos = async () => {
-        // Căutăm în memoria browserului 'biletul de voie' (token-ul) care dovedește că userul e logat
-        const token = localStorage.getItem('token'); 
         
-        if (!token) {
-            toast.error("Hei! Trebuie să intri în cont ca să poți adăuga în coș!");
-            return; // Oprim funcția aici dacă nu e logat
+        const existaInCos = cos.find(item => item._id === carte._id);
+        if (existaInCos) {
+            setCos(cos.map(item => item._id === carte._id ? { ...item, cantitate: item.cantitate + 1 } : item));
+        } else {
+            setCos([...cos, { ...carte, cantitate: 1 }]);
         }
+        
+        toast.success(`"${carte.titlu}" a fost adăugată în coș! 🛒`);
 
-        try {
-            // Strigăm la backend-ul tău, fix pe ruta pe care am creat-o mai devreme
-            const response = await fetch('http://localhost:5000/api/user/cos/adauga', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // Îi arătăm biletul de voie serverului
-                },
-                body: JSON.stringify({ carteId: carte._id, cantitate: 1 }) // Îi zicem ce carte vrem și câte bucăți
-            });
-
-            if (response.ok) {
-                toast.success("Yeeey! Cartea a fost adăugată în coșul tău! 🛒");
-            } else {
-                toast.error("A apărut o mică problemă la adăugarea în coș.");
+        // Logica 2: Trimitem și către Backend-ul tău
+        const token = localStorage.getItem('token'); 
+        if (token) {
+            try {
+                await fetch('http://localhost:5000/api/user/cos/adauga', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ carteId: carte._id, cantitate: 1 })
+                });
+            } catch (eroare) {
+                console.error("Eroare la salvarea coșului în BD:", eroare);
             }
-        } catch (eroare) {
-            console.error("Eroare la coș:", eroare);
-            toast.error("A apărut o eroare neașteptată la adăugarea în coș.");
         }
     };
 
-    // --- MAGIA PENTRU BUTONUL DE WISHLIST ---
+    
     const apasaAdaugaInWishlist = async () => {
         const token = localStorage.getItem('token');
         
@@ -73,8 +67,10 @@ function DetaliiCarte() {
             return;
         }
 
+        
+        setInWishlist(!inWishlist);
+
         try {
-            // Strigăm la ruta ta de wishlist pe care o aveai deja făcută
             const response = await fetch('http://localhost:5000/api/user/wishlist/toggle', {
                 method: 'POST',
                 headers: {
@@ -86,38 +82,38 @@ function DetaliiCarte() {
 
             const data = await response.json();
             if (response.ok) {
-                // Afișăm fix mesajul pe care îl dă backend-ul tău (ex: "Carte adăugată în wishlist!")
-                toast.success(data.mesaj); 
+                toast.success(data.mesaj || (inWishlist ? "Eliminată din wishlist!" : "Adăugată în wishlist!")); 
             } else {
-                toast.error("A apărut o problemă la adăugarea în wishlist.");
+                // Dacă a eșuat pe server, dăm revert la inima vizuală
+                setInWishlist(inWishlist);
+                toast.error("A apărut o problemă la wishlist.");
             }
         } catch (eroare) {
+            setInWishlist(inWishlist);
             console.error("Eroare la wishlist:", eroare);
             toast.error("A apărut o eroare neașteptată.");
         }
     };
 
-    // 4. Aici decidem ce arătăm pe ecran înainte să se încarce designul complet:
-    if (loading) return <div className="text-gray-300 text-center mt-20 text-xl">Se încarcă detaliile... ⏳</div>;
-    if (!carte) return <div className="text-red-400 text-center mt-20 text-xl font-bold">Cartea nu a fost găsită în sistem! 😕</div>;
+    if (loading) return <div className="min-h-screen bg-gray-950 text-gray-300 flex justify-center items-center text-xl">Se încarcă detaliile... ⏳</div>;
+    if (!carte) return <div className="min-h-screen bg-gray-950 text-red-400 flex justify-center items-center text-xl font-bold">Cartea nu a fost găsită în sistem! 😕</div>;
 
-    // 5. Aici este HTML-ul (designul) paginii. Acum folosim datele din cutiuța 'carte'.
     return (
-        <div className="min-h-screen bg-gray-950 p-4 md:p-8 w-full font-sans">
+        <div className="min-h-screen bg-gray-950 p-4 md:p-8 w-full font-sans overflow-auto flex-1">
+            <ToastContainer position="top-right" autoClose={3000} theme="dark" />
             
-            {/* Bara de sus cu link-urile (Înapoi la produse / Fictiune / Nume Carte) */}
+            {/* Bara de sus cu link-urile */}
             <div className="max-w-6xl mx-auto mb-6 flex items-center gap-2 text-sm text-gray-500 font-medium">
                 <Link to="/" className="hover:text-blue-400 transition flex items-center gap-1">
                     <span>←</span> Înapoi la Produse
                 </Link>
                 <span>/</span>
-                <span className="text-gray-500 cursor-pointer hover:text-blue-400">{carte.categorie || 'Fără categorie'}</span>
+                <span className="text-gray-500">{carte.categorie || 'Fără categorie'}</span>
                 <span>/</span>
                 <span className="text-gray-300 font-bold">{carte.titlu}</span>
             </div>
 
-            {/* Fereastra principală care conține cele 3 coloane */}
-            <div className="max-w-6xl mx-auto bg-gray-900 rounded-xl shadow-lg border border-gray-800 overflow-hidden">
+            <div className="max-w-6xl mx-auto bg-gray-900 rounded-xl shadow-lg border border-gray-800 overflow-hidden mb-10">
                 <div className="flex flex-col md:flex-row p-6 md:p-10 gap-10">
                     
                     {/* COLOANA 1: Imaginea Cărții */}
@@ -125,14 +121,14 @@ function DetaliiCarte() {
                         <img 
                             src={carte.imagine_url || carte.imagine} 
                             alt={carte.titlu} 
-                            className="w-full max-w-[250px] h-auto object-cover rounded shadow-2xl border border-gray-700"
+                            className="w-full max-w-[250px] aspect-[2/3] object-cover rounded-md shadow-2xl border border-gray-700"
                         />
                     </div>
 
                     {/* COLOANA 2: Titlu, Autor, Categorii și Descriere */}
                     <div className="w-full md:w-2/4 flex flex-col">
                         <h1 className="text-3xl font-extrabold text-white mb-1">{carte.titlu}</h1>
-                        <p className="text-lg text-gray-400 mb-6">de <span className="font-semibold text-blue-400 cursor-pointer hover:underline">{carte.autor}</span></p>
+                        <p className="text-lg text-gray-400 mb-6">de <span className="font-semibold text-blue-400">{carte.autor}</span></p>
 
                         <hr className="mb-6 border-gray-800" />
 
@@ -170,20 +166,27 @@ function DetaliiCarte() {
                                 )}
                             </div>
 
-                            {/* Aici am legat butonul la funcția noastră 'apasaAdaugaInCos' */}
                             <button 
                                 onClick={apasaAdaugaInCos}
-                                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded transition-colors mb-3 shadow-lg shadow-orange-900/20"
+                                disabled={carte.stoc <= 0}
+                                className={`w-full font-bold py-3 px-4 rounded transition-colors mb-3 shadow-lg ${
+                                    carte.stoc > 0 
+                                    ? 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-900/20' 
+                                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                }`}
                             >
-                                ADAUGĂ ÎN COȘ
+                                {carte.stoc > 0 ? 'ADAUGĂ ÎN COȘ' : 'INDISPONIBIL'}
                             </button>
                             
-                            {/* Aici am legat butonul la funcția 'apasaAdaugaInWishlist' */}
                             <button 
                                 onClick={apasaAdaugaInWishlist}
-                                className="w-full bg-transparent hover:bg-gray-700 text-gray-300 font-medium py-2 px-4 rounded border border-gray-600 transition-colors text-sm"
+                                className={`w-full font-medium py-2 px-4 rounded border transition-colors text-sm flex items-center justify-center gap-2 ${
+                                    inWishlist 
+                                    ? 'bg-red-500/10 text-red-500 border-red-500/50 hover:bg-red-500/20' 
+                                    : 'bg-transparent text-gray-300 border-gray-600 hover:bg-gray-700'
+                                }`}
                             >
-                                Adaugă în wishlist ♡
+                                {inWishlist ? '❤️ În wishlist-ul tău' : '♡ Adaugă în wishlist'}
                             </button>
 
                             <div className="mt-6 text-xs text-gray-400 space-y-2 border-t border-gray-700 pt-4">

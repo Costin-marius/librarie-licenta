@@ -403,59 +403,75 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare }) {
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
                                         {cartiProcesate.map((carte) => (
-                                            <div key={carte._id} className="bg-gray-900 rounded-2xl shadow-lg hover:shadow-xl hover:shadow-blue-900/20 transition-all duration-300 overflow-hidden flex flex-col border border-gray-800 relative">
-                                                <Link to={`/carte/${carte._id}`} className="h-56 overflow-hidden block">
+                                            <div key={carte._id} className="bg-gray-900 rounded-lg shadow-md hover:shadow-xl hover:shadow-blue-900/20 transition-all duration-300 flex flex-col relative border border-gray-800 group overflow-hidden">
+                                                
+                                                {/* INIMIOARA - Poziționată absolut peste imagine în dreapta sus */}
+                                                <button className="absolute top-2 right-2 z-10 bg-gray-900/60 backdrop-blur-sm hover:bg-red-500 text-gray-300 hover:text-white rounded-full p-2 transition-colors border border-gray-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                                    </svg>
+                                                </button>
+
+                                                {/* POZA CĂRȚII - Clickabilă, te duce pe pagina cărții, aspect de copertă reală */}
+                                                <Link to={`/carte/${carte._id}`} className="relative aspect-[2/3] w-full overflow-hidden block bg-gray-800 shrink-0">
                                                     <img 
                                                         src={carte.imagine_url} 
                                                         alt={carte.titlu} 
-                                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                                                     />
                                                 </Link>
                                                 
-                                                <div className="p-5 flex flex-col flex-grow">
+                                                {/* ZONA DE TEXT - Fără trunchiere pe titlu, text centrat */}
+                                                <div className="p-3 sm:p-4 flex flex-col flex-grow text-center">
                                                     
+                                                    {/* Categoria */}
                                                     <div className="mb-2">
-                                                        <span className="bg-blue-900/40 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wide border border-blue-800/50">
+                                                        <span className="bg-blue-900/40 text-blue-400 text-[10px] sm:text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wide border border-blue-800/50">
                                                             {carte.categorie || 'Fără categorie'}
                                                         </span>
                                                     </div>
 
-                                                    <h3 className="text-lg font-bold text-gray-100 mb-1 line-clamp-2">{carte.titlu}</h3>
-                                                    <p className="text-sm text-gray-400 mb-2">{carte.autor}</p>
+                                                    {/* Titlu și Autor - Se întind pe câte rânduri au nevoie */}
+                                                    <h3 className="text-sm sm:text-base font-bold text-gray-100 mb-1 leading-tight">{carte.titlu}</h3>
+                                                    <p className="text-xs sm:text-sm text-gray-400 mb-3">{carte.autor}</p>
                                                     
-                                                    <div className="mt-auto pt-4 flex items-center justify-between">
-                                                        <span className="text-2xl font-black text-blue-400">{carte.pret} lei</span>
-                                                        <span className="text-xs font-medium bg-gray-800 text-gray-300 px-2 py-1 rounded-full border border-gray-700">Stoc: {carte.stoc}</span>
-                                                    </div>
-                                                    
-                                                    {carte.stoc > 0 ? (
-                                                        <button 
-                                                            onClick={() => adaugaInCos(carte)} 
-                                                            className="w-full mt-4 bg-gray-800 hover:bg-blue-600 text-white border border-gray-700 hover:border-blue-600 font-semibold py-2.5 rounded-lg transition-colors"
-                                                        >
-                                                            Adaugă în coș
-                                                        </button>
-                                                    ) : (
-                                                        <button 
-                                                            disabled
-                                                            className="w-full mt-4 bg-red-900/40 text-red-400 border border-red-800 font-semibold py-2.5 rounded-lg cursor-not-allowed opacity-80"
-                                                        >
-                                                            Stoc insuficient
-                                                        </button>
-                                                    )}
-
-                                                    {localStorage.getItem('rol') === 'admin' && (
-                                                        <div className="flex gap-2 mt-2 pt-2 border-t border-gray-800">
-                                                            <button onClick={() => deschideEditare(carte)} className="flex-1 bg-amber-900/40 hover:bg-amber-800/60 text-amber-400 py-1.5 rounded-md text-sm font-medium transition">
-                                                                ✏️ Edit
-                                                            </button>
-                                                            <button onClick={() => stergeCarte(carte._id)} className="flex-1 bg-red-900/40 hover:bg-red-800/60 text-red-400 py-1.5 rounded-md text-sm font-medium transition">
-                                                                🗑️ Șterge
-                                                            </button>
+                                                    {/* CONTAINER PREȚ, STOC ȘI BUTOANE - "mt-auto" îl ține jos aliniat perfect */}
+                                                    <div className="mt-auto pt-3 border-t border-gray-800/50">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <span className="text-lg sm:text-xl font-black text-blue-400">{carte.pret} lei</span>
+                                                            <span className="text-[10px] sm:text-xs font-medium bg-gray-800 text-gray-300 px-2 py-1 rounded-full border border-gray-700">Stoc: {carte.stoc}</span>
                                                         </div>
-                                                    )}
+                                                        
+                                                        {carte.stoc > 0 ? (
+                                                            <button 
+                                                                onClick={() => adaugaInCos(carte)} 
+                                                                className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold py-2.5 rounded-md transition-colors shadow-sm"
+                                                            >
+                                                                Adaugă în coș
+                                                            </button>
+                                                        ) : (
+                                                            <button 
+                                                                disabled
+                                                                className="w-full bg-red-900/40 text-red-400 border border-red-800 text-xs sm:text-sm font-semibold py-2.5 rounded-md cursor-not-allowed opacity-80"
+                                                            >
+                                                                Stoc insuficient
+                                                            </button>
+                                                        )}
+
+                                                        {/* BUTOANE ADMIN - Păstrate exact ca în logica ta */}
+                                                        {localStorage.getItem('rol') === 'admin' && (
+                                                            <div className="flex gap-2 mt-2 pt-2 border-t border-gray-800">
+                                                                <button onClick={() => deschideEditare(carte)} className="flex-1 bg-amber-900/40 hover:bg-amber-800/60 text-amber-400 py-1.5 rounded-md text-sm font-medium transition">
+                                                                    Editează
+                                                                </button>
+                                                                <button onClick={() => stergeCarte(carte._id)} className="flex-1 bg-red-900/40 hover:bg-red-800/60 text-red-400 py-1.5 rounded-md text-sm font-medium transition">
+                                                                    Șterge
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}

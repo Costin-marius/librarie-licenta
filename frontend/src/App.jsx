@@ -82,7 +82,7 @@ function App() {
                                     onClick={() => { setVizualizare('magazin'); setArataCos(false); setTermenCautare(''); }}
                                     className="text-2xl font-extrabold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-2"
                                 >
-                                    📚 Librarie
+                                    📚 InkWell
                                 </Link>
 
                                 {rolUtilizator === 'admin' && (
@@ -123,10 +123,10 @@ function App() {
                                         className="relative bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 shadow-lg shadow-blue-900/20"
                                     >
                                         🛒 Coșul meu
-                                        <span className="bg-white text-blue-600 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black">
-                                            {/* Aici arătăm câte produse diferite sunt în coș */}
-                                            {cos.length}
-                                        </span>
+                                        <span className="bg-white text-blue-600 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-xs font-black">
+                                        {/* Aici adunăm cantitatea FIECĂRUI produs din coș */}
+                                        {cos.reduce((total, produs) => total + (produs.cantitate || 1), 0)}
+                                         </span>
                                     </button>
                                 )}
 
@@ -163,8 +163,8 @@ function App() {
                                 {/* Ruta pentru Dashboard Admin */}
                                 <Route path="/dashboard" element={<AdminDashboard />} />
 
-                                {/* Ruta pentru Detalii Carte */}
-                                <Route path="/carte/:id" element={<DetaliiCarte />} />
+                                {/*Ruta pentru Detalii Carte*/}
+                                <Route path="/carte/:id" element={<DetaliiCarte cos={cos} setCos={setCos} />} />
                             </Routes>
                         </main>
                     </>
