@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import DetaliiCarte from './DetaliiCarte';
+import Profil from './pages/Profil';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 function App() {
@@ -73,17 +74,9 @@ function App() {
     return (
         <Router>
             <div className="min-h-screen bg-ivory text-anthracite dark:bg-slate-900 dark:text-stone-300 font-sans transition-colors duration-300 antialiased overflow-x-hidden flex flex-col">
-                {!rolUtilizator ? (
-                    <Login 
-                        setRolUtilizator={setRolUtilizator} 
-                        setVizualizare={setVizualizare} 
-                        setNumeUtilizator={setNumeUtilizator} 
-                        setUserId={setUserId} 
-                    />
-                ) : (
-                    <>
-                        {/* --- NAVBAR COMPLET REFĂCUT DUPĂ DESIGN --- */}
-                        <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-white/70 dark:bg-slate-900/80 border-b border-stone-200/50 dark:border-slate-800/50 h-20 flex items-center px-6 md:px-12 transition-colors duration-300">
+                {/* --- NAVBAR COMPLET REFĂCUT DUPĂ DESIGN --- */}
+                {vizualizare !== 'login' && (
+                    <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-white/70 dark:bg-slate-900/80 border-b border-stone-200/50 dark:border-slate-800/50 h-20 flex items-center px-6 md:px-12 transition-colors duration-300">
                             <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-8">
                                 {/* Brand */}
                                 <div className="flex-shrink-0 flex items-center gap-6">
@@ -152,26 +145,42 @@ function App() {
                                         </button>
                                     )}
                                     
-                                    {/* Profile Button */}
-                                    <Link 
-                                        to="/profil" 
-                                        onClick={() => { setVizualizare('profil'); setArataCos(false); }}
-                                        className="text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
-                                    >
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                    </Link>
+                                    {rolUtilizator ? (
+                                        <>
+                                            {/* Profile Button */}
+                                            <Link 
+                                                to="/profil" 
+                                                onClick={() => { setVizualizare('profil'); setArataCos(false); }}
+                                                className="text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+                                            >
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                            </Link>
 
-                                    {/* Logout Button */}
-                                    <button
-                                        onClick={handleDelogare}
-                                        title="Delogare"
-                                        className="text-anthracite dark:text-stone-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                                    >
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                    </button>
+                                            {/* Logout Button */}
+                                            <button
+                                                onClick={() => {
+                                                    handleDelogare();
+                                                    window.location.href = '/';
+                                                }}
+                                                title="Delogare"
+                                                className="text-anthracite dark:text-stone-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                            >
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <Link 
+                                            to="/login"
+                                            onClick={() => setVizualizare('login')}
+                                            className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-full shadow-sm transition-all"
+                                        >
+                                            Autentificare
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </nav>
+                )}
 
                         {/* --- ZONA DE CONȚINUT --- */}
                         <main className="flex-1 flex overflow-hidden mt-20">
@@ -188,20 +197,22 @@ function App() {
                                     />
                                 } />
 
+                                <Route path="/login" element={
+                                    <Login 
+                                        setRolUtilizator={setRolUtilizator} 
+                                        setVizualizare={setVizualizare} 
+                                        setNumeUtilizator={setNumeUtilizator} 
+                                        setUserId={setUserId} 
+                                    />
+                                } />
+
                                 <Route path="/dashboard" element={<AdminDashboard />} />
 
                                 <Route path="/carte/:id" element={<DetaliiCarte cos={cos} setCos={setCos} />} />
 
-                                <Route path="/profil" element={
-                                    <div className="p-8 w-full max-w-7xl mx-auto overflow-y-auto">
-                                        <h2 className="text-3xl font-serif font-bold mb-6 text-anthracite dark:text-stone-100 border-b border-stone-200 dark:border-slate-800 pb-4">👤 Profilul Meu</h2>
-                                        <p className="text-stone-600 dark:text-stone-400">Salut, {numeUtilizator || rolUtilizator}. Aici vom construi panoul utilizatorului. Vom putea adăuga: istoric comenzi, cărți favorite (wishlist) și setări cont.</p>
-                                    </div>
-                                } />
+                                <Route path="/profil" element={<Profil inapoiLaHome={() => { setVizualizare('magazin'); window.location.href = '/'; }} />} />
                             </Routes>
                         </main>
-                    </>
-                )}
             </div>
         </Router>
     );

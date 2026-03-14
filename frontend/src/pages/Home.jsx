@@ -8,6 +8,13 @@ import { Link } from 'react-router-dom';
 function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
     const [carti, setCarti] = useState([]); 
     const [arataProfil, setArataProfil] = useState(false);
+    
+    // Inițializare wishlist din localStorage, altfel []
+    const [wishlist, setWishlist] = useState(() => {
+        const saved = localStorage.getItem('wishlist');
+        return saved ? JSON.parse(saved) : [];
+    });
+
     const [arataFormular, setArataFormular] = useState(false);
     const [idEditare, setIdEditare] = useState(null); 
     const [dateFormular, setDateFormular] = useState({
@@ -18,6 +25,11 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
     const [metodaPlata, setMetodaPlata] = useState('ramburs'); 
     const [dateLivrare, setDateLivrare] = useState({ nume: '', adresa: '', telefon: '' });
     const [dateCard, setDateCard] = useState({ numar: '', expirare: '', cvv: '' });
+
+    // Când wishlist se schimbă, îl salvăm în localStorage
+    useEffect(() => {
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    }, [wishlist]);
 
     useEffect(() => {
         fetchCarti();
@@ -80,6 +92,16 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
         setDateFormular({ isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: '' });
     };
 
+    const toggleWishlist = (carteId) => {
+        setWishlist((prevWishlist) => {
+            if (prevWishlist.includes(carteId)) {
+                return prevWishlist.filter(id => id !== carteId);
+            } else {
+                return [...prevWishlist, carteId];
+            }
+        });
+    };
+
     const adaugaInCos = (carte) => {
         const existaInCos = cos.find(item => item._id === carte._id);
         if (existaInCos) {
@@ -109,6 +131,16 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
 
     const plaseazaComanda = async (e) => {
         e.preventDefault();
+
+        // GUEST CHECK
+        if (!userId && !localStorage.getItem('rol')) {
+            toast.error("Trebuie să fii autentificat pentru a plasa o comandă!");
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 1500);
+            return;
+        }
+
         const dateComanda = {
             dateLivrare, metodaPlata, total: Number(totalCos.toFixed(2)), 
             produse: cos.map(item => ({ carteId: item._id, titlu: item.titlu, cantitate: item.cantitate, pret: item.pret }))
@@ -152,36 +184,6 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
                 ) : (
                     <>
                         <div className="pt-8 px-6 md:px-12 max-w-7xl mx-auto min-h-screen">
-                            {/* HERO SECTION */}
-                            {!arataCos && !arataFormular && (
-                                <section className="relative rounded-[2rem] overflow-hidden bg-cream dark:bg-slate-800 mb-16 shadow-inner transition-colors duration-300">
-                                    <div className="flex flex-col md:flex-row items-center min-h-[500px]">
-                                        <div className="w-full md:w-1/2 p-10 md:p-20 z-10">
-                                            <span className="inline-block px-4 py-1 rounded-full bg-amber-100 dark:bg-slate-700 text-amber-700 dark:text-amber-500 text-xs font-semibold tracking-widest uppercase mb-6 transition-colors duration-300">
-                                                Cartea Săptămânii
-                                            </span>
-                                            <h1 className="text-5xl md:text-7xl font-serif font-bold text-anthracite dark:text-stone-100 mb-6 leading-tight transition-colors duration-300">
-                                                Umbra Vântului
-                                            </h1>
-                                            <p className="text-lg text-stone-600 dark:text-stone-400 mb-10 max-w-md leading-relaxed transition-colors duration-300">
-                                                O incursiune misterioasă în inima Barcelonei postbelice. Descoperă Cimitirul Cărților Uitate într-o ediție de colecție.
-                                            </p>
-                                            <button className="px-10 py-4 bg-anthracite dark:bg-slate-700 text-white rounded-full font-medium hover:bg-black dark:hover:bg-slate-600 transition-all transform hover:scale-105 active:scale-95">
-                                                Descoperă
-                                            </button>
-                                        </div>
-                                        <div className="w-full md:w-1/2 relative h-[400px] md:h-full">
-                                            <img 
-                                                alt="Umbra Vantului Book Cover" 
-                                                className="absolute inset-0 w-full h-full object-cover" 
-                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBd_Cznv90MBeDG5BXxGOxPTVVqvDhiA_E2OveGpK0T3vxW69cGJi7kK2WW1whbWfjxktk3sE-IWrXcJ5ub2TKFjHNuE742uOMx6kvWFIRIS-GRvQI9PKlr4YHQZ6-ofGXtWfvPzRparDu0QrDvidAyE1mFG7I2_gqbZhfsNKWFE6ytMVzEdD2rC0AjzcWLfgpR8BA3BT-_arGHvOF3rPp-3X-QOyZ8LIZd6YCbgdkp3eI5cO86ehvWCrChe58pXezCCqHdLvCeCo"
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-r from-cream dark:from-slate-800 via-transparent to-transparent transition-colors duration-300"></div>
-                                        </div>
-                                    </div>
-                                </section>
-                            )}
-
                             {/* CATEGORIES & FILTERS SECTION */}
                             {!arataCos && !arataFormular && (
                                 <section className="mb-12">
@@ -408,8 +410,23 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
                                                         </Link>
                                                         <div className="aspect-[2/3] w-3/4 opacity-0 pointer-events-none"></div>
                                                         
+                                                        {/* Buton Wishlist */}
+                                                        <button 
+                                                            onClick={(e) => { e.preventDefault(); toggleWishlist(carte._id); }}
+                                                            className="absolute top-2 right-2 z-20 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-2 rounded-full hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
+                                                        >
+                                                            <svg 
+                                                                className={`w-5 h-5 transition-colors ${wishlist.includes(carte._id) ? 'text-red-500 fill-red-500' : 'text-stone-400 dark:text-stone-500 hover:text-red-400'}`} 
+                                                                fill={wishlist.includes(carte._id) ? 'currentColor' : 'none'} 
+                                                                stroke="currentColor" 
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                                            </svg>
+                                                        </button>
+
                                                         {/* Status Badges */}
-                                                        <div className="absolute top-0 right-0 z-20 flex flex-col items-end gap-2">
+                                                        <div className="absolute top-12 right-0 z-20 flex flex-col items-end gap-2">
                                                             {carte.stoc <= 3 && carte.stoc > 0 && (
                                                                 <span className="px-3 py-1 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold rounded-md border border-red-100 dark:border-red-900/50 uppercase tracking-tight">Doar {carte.stoc} în stoc</span>
                                                             )}

@@ -1,55 +1,67 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// NOU: Importăm librăriile pentru fundalul animat
+// Importăm librăriile pentru fundalul animat
 import Particles from "react-tsparticles";
 import { loadFull } from "tsparticles";
 
-// Am adaugat setRolUtilizator si setVizualizare ca props
-function Login({ setRolUtilizator, setVizualizare , setNumeUtilizator}) {
+function Login({ setRolUtilizator, setVizualizare, setNumeUtilizator }) {
+    // REZOLVAREA BUG-ULUI: `useNavigate` trebuie chemat AICI, la nivelul cel mai de sus al componentei!
+    const navigate = useNavigate(); 
+    
     const [isLogin, setIsLogin] = useState(true);
     const [dateFormular, setDateFormular] = useState({ email: '', parola: '', nume: '' });
 
-    // NOU: Funcția care inițializează particulele de pe fundal
+    // Funcția care inițializează particulele de pe fundal
     const particlesInit = async (main) => {
         await loadFull(main);
     };
 
+    // Funcția care adună datele din input-uri
     const handleInput = (e) => {
+        // Am șters navigate() de aici, pentru că încălca regulile React
         setDateFormular({ ...dateFormular, [e.target.name]: e.target.value });
     };
 
+    // Logica de logare/înregistrare
     const trimiteFormular = async (e) => {
         e.preventDefault();
         try {
             if (isLogin) {
+                // Cererea de login către backend
                 const response = await axios.post('http://localhost:5000/api/auth/login', {
                     email: dateFormular.email,
                     parola: dateFormular.parola
                 });
                 
+                // Salvăm datele în browser (ca să ne țină minte și după refresh)
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('rol', response.data.rol || 'user');
-                localStorage.setItem('nume', response.data.nume || ''); // Salvăm în browser
+                localStorage.setItem('nume', response.data.nume || ''); 
                 
+                // Actualizăm stările aplicației (dacă ne-au fost trimise ca props din App.jsx)
                 if(setNumeUtilizator) setNumeUtilizator(response.data.nume || '');
-                
-                // Actualizam starea in App.jsx imediat
                 if(setRolUtilizator) setRolUtilizator(response.data.rol || 'user');
 
-                toast.success('Te-ai autentificat!');
+                toast.success('Te-ai autentificat cu succes!');
                 
-                // Ne intoarcem la magazin
+                // Redirecționarea elegantă după 1 secundă
                 setTimeout(() => {
+                    // Dacă aplicația folosește stări pentru vizualizare
                     if(setVizualizare) setVizualizare('magazin');
-                    else window.location.href = '/';
+                    
+                    // REDIRECȚIONAREA PRINCIPALĂ (Te scoate de pe /login și te duce pe Homepage)
+                    navigate('/');
                 }, 1000);
 
             } else {
+                // Cererea de înregistrare
                 await axios.post('http://localhost:5000/api/auth/register', dateFormular);
                 toast.success('Cont creat! Acum te poți loga.');
+                // Trecem automat înapoi pe modul "Login" după creare
                 setIsLogin(true);
             }
         } catch (error) {
@@ -60,7 +72,7 @@ function Login({ setRolUtilizator, setVizualizare , setNumeUtilizator}) {
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-gray-950 px-4 relative overflow-hidden">
             
-            {/*Componenta de particule pentru fundal */}
+            {/* Fundalul mișto cu particule */}
             <Particles
                 id="tsparticles"
                 init={particlesInit}
@@ -94,7 +106,7 @@ function Login({ setRolUtilizator, setVizualizare , setNumeUtilizator}) {
                         },
                         number: {
                             density: { enable: true, area: 800 },
-                            value: 60, // Numărul de particule
+                            value: 60,
                         },
                         opacity: { value: 0.3 },
                         shape: { type: "circle" },
@@ -107,7 +119,7 @@ function Login({ setRolUtilizator, setVizualizare , setNumeUtilizator}) {
 
             <ToastContainer position="top-right" autoClose={3000} theme="dark" />
 
-            {/*Am adăugat z-10, relative și backdrop-blur ca să iasă în evidență peste particule */}
+            {/* Cutia principală de login (glassmorphism) */}
             <div className="max-w-md w-full bg-gray-900/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-gray-800 relative z-10">
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-extrabold text-blue-400 mb-2">📚 InkWell</h1>
