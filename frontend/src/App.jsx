@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios'; // NOU: Adăugăm axios pentru a vorbi cu backend-ul
+import axios from 'axios';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
@@ -7,37 +7,25 @@ import DetaliiCarte from './DetaliiCarte';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 function App() {
-    // Aici ținem minte cine folosește aplicația și ce rol are
     const [rolUtilizator, setRolUtilizator] = useState(localStorage.getItem('rol'));
     const [numeUtilizator, setNumeUtilizator] = useState(localStorage.getItem('nume')); 
-    
-    // NOU: Avem nevoie de ID-ul utilizatorului pentru a-i găsi coșul în baza de date
     const [userId, setUserId] = useState(localStorage.getItem('userId')); 
-    
-    // Păstrăm vizualizarea pentru a ști ce butoane/elemente ascundem în Navbar
     const [vizualizare, setVizualizare] = useState('magazin');
-    
-    // Tot ce ține de coșul de cumpărături
     const [cos, setCos] = useState([]);
     const [arataCos, setArataCos] = useState(false);
-    
-    // Bara de search
     const [termenCautare, setTermenCautare] = useState(''); 
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
-    // NOU: Acest useEffect se declanșează când se încarcă aplicația SAU când un utilizator se loghează
     useEffect(() => {
         const id = localStorage.getItem('userId');
         setRolUtilizator(localStorage.getItem('rol'));
         setNumeUtilizator(localStorage.getItem('nume'));
         setUserId(id);
 
-        // Dacă avem un utilizator logat (adică avem un ID), îi aducem coșul din baza de date
         if (id) {
             const fetchCos = async () => {
                 try {
-                    // Facem request la ruta pe care am creat-o pe server
                     const response = await axios.get(`http://localhost:5000/api/cos/${id}`);
-                    // Punem produsele venite de la server în state-ul nostru
                     setCos(response.data.produse || []);
                 } catch (error) {
                     console.error("Eroare la aducerea coșului din baza de date:", error);
@@ -45,15 +33,38 @@ function App() {
             };
             fetchCos();
         }
-    }, [rolUtilizator]); // Se re-rulează ori de câte ori 'rolUtilizator' se schimbă (ex: la login)
+    }, [rolUtilizator]);
 
-    // Funcția de delogare
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+            document.documentElement.classList.add('dark');
+            setIsDarkMode(true);
+        } else {
+            document.documentElement.classList.remove('dark');
+            setIsDarkMode(false);
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        if (isDarkMode) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            setIsDarkMode(false);
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            setIsDarkMode(true);
+        }
+    };
+
     const handleDelogare = () => {
         localStorage.clear();
         setRolUtilizator(null);
         setNumeUtilizator(null);
-        setUserId(null); // NOU: Ștergem și ID-ul din state
-        setCos([]); // Coșul redevine gol în interfață la delogare
+        setUserId(null); 
         setArataCos(false);
         setVizualizare('magazin');
         setTermenCautare('');
@@ -61,9 +72,8 @@ function App() {
 
     return (
         <Router>
-            <div className="min-h-screen bg-gray-950 flex flex-col font-sans">
+            <div className="min-h-screen bg-ivory text-anthracite dark:bg-slate-900 dark:text-stone-300 font-sans transition-colors duration-300 antialiased overflow-x-hidden flex flex-col">
                 {!rolUtilizator ? (
-                    // NOU: Am pasat și setUserId către Login, ca să poată fi setat când intră în cont
                     <Login 
                         setRolUtilizator={setRolUtilizator} 
                         setVizualizare={setVizualizare} 
@@ -72,81 +82,99 @@ function App() {
                     />
                 ) : (
                     <>
-                        {/* --- MENIUL DE SUS (NAVBAR) --- */}
-                        <nav className="bg-gray-900 border-b border-gray-800 p-4 px-8 flex justify-between items-center shadow-md relative z-10 gap-4">
-                            <div className="flex items-center gap-6">
-                                
-                                {/*Am schimbat <button> în <Link to="/"> pentru navigare corectă */}
-                                <Link 
-                                    to="/"
-                                    onClick={() => { setVizualizare('magazin'); setArataCos(false); setTermenCautare(''); }}
-                                    className="text-2xl font-extrabold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-2"
-                                >
-                                    📚 InkWell
-                                </Link>
-
-                                {rolUtilizator === 'admin' && (
-                                    /*Am schimbat și butonul de Dashboard într-un <Link> */
-                                    <Link
-                                        to="/dashboard"
-                                        onClick={() => { setVizualizare('dashboard'); setArataCos(false); }}
-                                        className={`px-3 py-1.5 text-sm rounded-lg font-medium transition ${
-                                            vizualizare === 'dashboard'
-                                                ? 'bg-amber-600 text-white shadow-md'
-                                                : 'text-amber-500 hover:bg-gray-800 border border-amber-900/30'
-                                        }`}
+                        {/* --- NAVBAR COMPLET REFĂCUT DUPĂ DESIGN --- */}
+                        <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-white/70 dark:bg-slate-900/80 border-b border-stone-200/50 dark:border-slate-800/50 h-20 flex items-center px-6 md:px-12 transition-colors duration-300">
+                            <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-8">
+                                {/* Brand */}
+                                <div className="flex-shrink-0 flex items-center gap-6">
+                                    <Link 
+                                        to="/"
+                                        onClick={() => { setVizualizare('magazin'); setArataCos(false); setTermenCautare(''); }}
+                                        className="text-3xl font-serif font-bold tracking-tight text-amber-900 dark:text-amber-500 hover:text-amber-700 transition-colors"
                                     >
-                                        ⚙️ Dashboard
+                                        InkWell
                                     </Link>
-                                )}
-                            </div>
-
-                            {/* Bara de căutare */}
-                            {vizualizare === 'magazin' && !arataCos && (
-                                <div className="flex-1 max-w-xl relative hidden md:block">
-                                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">🔍</span>
-                                    <input
-                                        type="text"
-                                        placeholder="Caută după titlu, autor sau ISBN..."
-                                        value={termenCautare}
-                                        onChange={(e) => setTermenCautare(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-full text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-inner"
-                                    />
                                 </div>
-                            )}
 
-                            {/* Coșul și Delogarea */}
-                            <div className="flex items-center gap-6">
-                                {vizualizare === 'magazin' && (
-                                    <button
-                                        onClick={() => setArataCos(!arataCos)}
-                                        className="relative bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 shadow-lg shadow-blue-900/20"
-                                    >
-                                        🛒 Coșul meu
-                                        <span className="bg-white text-blue-600 min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-xs font-black">
-                                        {/* Aici adunăm cantitatea FIECĂRUI produs din coș */}
-                                        {cos.reduce((total, produs) => total + (produs.cantitate || 1), 0)}
-                                         </span>
-                                    </button>
+                                {/* Bara de Căutare */}
+                                {vizualizare === 'magazin' && !arataCos && (
+                                    <div className="flex-grow max-w-2xl hidden md:block">
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                placeholder="Caută titluri, autori sau genuri..."
+                                                value={termenCautare}
+                                                onChange={(e) => setTermenCautare(e.target.value)}
+                                                className="w-full h-12 pl-12 pr-6 bg-stone-100/50 dark:bg-slate-800/50 border-none rounded-full text-sm dark:text-stone-200 focus:ring-2 focus:ring-amber-500/20 focus:bg-white dark:focus:bg-slate-800 transition-all duration-300 placeholder-stone-400 dark:placeholder-stone-500"
+                                            />
+                                            <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
                                 )}
 
-                                <div className="flex items-center gap-4 border-l border-gray-800 pl-6">
-                                    <span className="text-gray-400 text-sm hidden sm:block">
-                                        Salut, <strong className="text-white">{numeUtilizator || rolUtilizator}</strong>
-                                    </span>
+                                {/* User Actions */}
+                                <div className="flex items-center space-x-4 md:space-x-6">
+                                    {rolUtilizator === 'admin' && (
+                                        <Link
+                                            to="/dashboard"
+                                            onClick={() => { setVizualizare('dashboard'); setArataCos(false); }}
+                                            className="hidden md:block text-sm font-medium text-amber-700 dark:text-amber-500 hover:text-amber-900 dark:hover:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-50 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-full transition-colors"
+                                        >
+                                            ⚙️ Dashboard
+                                        </Link>
+                                    )}
 
+                                    {/* Theme Toggle Button - SUN/MOON ICON */}
+                                    <button 
+                                        onClick={toggleTheme}
+                                        className="text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors p-2 rounded-full hover:bg-stone-100 dark:hover:bg-slate-800"
+                                        aria-label="Toggle Dark Mode"
+                                    >
+                                        {isDarkMode ? (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                        ) : (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                                        )}
+                                    </button>
+
+                                    {/* Cart Button */}
+                                    {vizualizare === 'magazin' && (
+                                        <button 
+                                            onClick={() => setArataCos(!arataCos)} 
+                                            className="text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors relative"
+                                        >
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                                            <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                                                {cos.reduce((total, produs) => total + (produs.cantitate || 1), 0)}
+                                            </span>
+                                        </button>
+                                    )}
+                                    
+                                    {/* Profile Button */}
+                                    <Link 
+                                        to="/profil" 
+                                        onClick={() => { setVizualizare('profil'); setArataCos(false); }}
+                                        className="text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    </Link>
+
+                                    {/* Logout Button */}
                                     <button
                                         onClick={handleDelogare}
-                                        className="text-gray-400 hover:text-red-400 transition font-medium text-sm border border-gray-800 hover:border-red-900/50 hover:bg-red-900/20 px-3 py-1.5 rounded-md"
+                                        title="Delogare"
+                                        className="text-anthracite dark:text-stone-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                                     >
-                                        🚪 Delogare
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                     </button>
                                 </div>
                             </div>
                         </nav>
 
                         {/* --- ZONA DE CONȚINUT --- */}
-                        <main className="flex-1 flex overflow-hidden">
+                        <main className="flex-1 flex overflow-hidden mt-20">
                             <Routes>
                                 {/* Ruta principală (Magazinul) */}
                                 <Route path="/" element={
@@ -156,15 +184,20 @@ function App() {
                                         arataCos={arataCos}
                                         setArataCos={setArataCos}
                                         termenCautare={termenCautare}
-                                        userId={userId} // NOU: Trimitem și ID-ul mai departe către Home ca să poată adăuga produse
+                                        userId={userId} 
                                     />
                                 } />
 
-                                {/* Ruta pentru Dashboard Admin */}
                                 <Route path="/dashboard" element={<AdminDashboard />} />
 
-                                {/*Ruta pentru Detalii Carte*/}
                                 <Route path="/carte/:id" element={<DetaliiCarte cos={cos} setCos={setCos} />} />
+
+                                <Route path="/profil" element={
+                                    <div className="p-8 w-full max-w-7xl mx-auto overflow-y-auto">
+                                        <h2 className="text-3xl font-serif font-bold mb-6 text-anthracite dark:text-stone-100 border-b border-stone-200 dark:border-slate-800 pb-4">👤 Profilul Meu</h2>
+                                        <p className="text-stone-600 dark:text-stone-400">Salut, {numeUtilizator || rolUtilizator}. Aici vom construi panoul utilizatorului. Vom putea adăuga: istoric comenzi, cărți favorite (wishlist) și setări cont.</p>
+                                    </div>
+                                } />
                             </Routes>
                         </main>
                     </>
