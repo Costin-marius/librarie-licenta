@@ -30,6 +30,28 @@ router.get('/profil', verificaToken, async (req, res) => {
     }
 });
 
+// GET WISHLIST
+router.get('/wishlist', verificaToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).populate('wishlist');
+        if (!user) return res.status(404).json({ mesaj: 'Utilizatorul nu a fost găsit.' });
+        res.json(user.wishlist);
+    } catch (eroare) {
+        res.status(500).json({ mesaj: 'Eroare server wishlist' });
+    }
+});
+
+// GET COS
+router.get('/cos', verificaToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).populate('cos.carte');
+        if (!user) return res.status(404).json({ mesaj: 'Utilizatorul nu a fost găsit.' });
+        res.json(user.cos);
+    } catch (eroare) {
+        res.status(500).json({ mesaj: 'Eroare server cos' });
+    }
+});
+
 // 2. ACTUALIZEAZĂ NUMELE ȘI ADRESA
 router.put('/actualizare', verificaToken, async (req, res) => {
     try {

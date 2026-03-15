@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Cos = require('../models/Cos'); // Asigură-te că calea e corectă către modelul tău
+const Cos = require('../models/Cos');
 
 // 1. GET: Aducem coșul utilizatorului
 router.get('/:userId', async (req, res) => {

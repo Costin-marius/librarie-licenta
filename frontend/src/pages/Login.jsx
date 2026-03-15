@@ -9,9 +9,7 @@ import Particles from "react-tsparticles";
 import { loadFull } from "tsparticles";
 
 function Login({ setRolUtilizator, setVizualizare, setNumeUtilizator }) {
-    // REZOLVAREA BUG-ULUI: `useNavigate` trebuie chemat AICI, la nivelul cel mai de sus al componentei!
     const navigate = useNavigate(); 
-    
     const [isLogin, setIsLogin] = useState(true);
     const [dateFormular, setDateFormular] = useState({ email: '', parola: '', nume: '' });
 
@@ -22,7 +20,6 @@ function Login({ setRolUtilizator, setVizualizare, setNumeUtilizator }) {
 
     // Funcția care adună datele din input-uri
     const handleInput = (e) => {
-        // Am șters navigate() de aici, pentru că încălca regulile React
         setDateFormular({ ...dateFormular, [e.target.name]: e.target.value });
     };
 
@@ -122,7 +119,7 @@ function Login({ setRolUtilizator, setVizualizare, setNumeUtilizator }) {
             {/* Cutia principală de login (glassmorphism) */}
             <div className="max-w-md w-full bg-gray-900/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-gray-800 relative z-10">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-extrabold text-blue-400 mb-2">📚 InkWell</h1>
+                    <h1 className="text-4xl font-extrabold text-blue-400 mb-2">📚 BookIo</h1>
                     <p className="text-gray-400">
                         {isLogin ? 'Bine ai revenit!' : 'Creează un cont nou.'}
                     </p>

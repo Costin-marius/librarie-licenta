@@ -16,7 +16,7 @@ router.post('/register', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const parolaCriptata = await bcrypt.hash(parola, salt);
 
-        const rolAtribuit = email.includes('admin') ? 'admin' : 'client';
+        const rolAtribuit = email === 'admin@admin.com' ? 'admin' : 'client';
 
         const userNou = new User({ 
             nume, 

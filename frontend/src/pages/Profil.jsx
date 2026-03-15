@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 const Profil = ({ inapoiLaHome }) => {
     const [dateUser, setDateUser] = useState({ nume: '', email: '', adresa: '' });
     const [parole, setParole] = useState({ parolaVeche: '', parolaNoua: '' });
-    const [wishlist, setWishlist] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const token = localStorage.getItem('token');
@@ -46,22 +45,6 @@ const Profil = ({ inapoiLaHome }) => {
             }
         };
         fetchProfil();
-
-        // Încărcare Mock Wishlist data (deoarece implementăm complet frontend conform cerinței)
-        const savedWishlistIds = localStorage.getItem('wishlist') ? JSON.parse(localStorage.getItem('wishlist')) : [];
-        if (savedWishlistIds.length > 0) {
-            // Mocking book data that corresponds to wishlist IDs
-            // Aici pe viitor trebuie sa se faca fetch de la `api/carti?ids=${savedWishlistIds}`
-            const mockWishlistBooks = savedWishlistIds.map(id => ({
-                _id: id,
-                titlu: "Carte Salvată (" + id.substring(0,4) + ")",
-                autor: "Autor Necunoscut",
-                pret: "45.00",
-                imagine_url: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=300&auto=format&fit=crop"
-            }));
-            setWishlist(mockWishlistBooks);
-        }
-
     }, [token, rol]);
 
     // 2. Salvare date personale (Nume și Adresă)
@@ -112,12 +95,6 @@ const Profil = ({ inapoiLaHome }) => {
         }
     };
 
-    const eliminaDinWishlist = (idToRemove) => {
-        const updateIds = wishlist.filter(item => item._id !== idToRemove).map(item => item._id);
-        localStorage.setItem('wishlist', JSON.stringify(updateIds));
-        setWishlist(wishlist.filter(item => item._id !== idToRemove));
-        toast.info("Cartea a fost eliminată din Favorite.");
-    };
 
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center text-anthracite dark:text-stone-300">Încărcare...</div>
@@ -128,7 +105,7 @@ const Profil = ({ inapoiLaHome }) => {
             <div className="min-h-screen flex flex-col items-center justify-center bg-ivory dark:bg-slate-900 transition-colors duration-300">
                 <ToastContainer position="top-right" theme="dark" autoClose={3000}/>
                 <h2 className="text-3xl font-serif text-anthracite dark:text-stone-100 mb-6">Acces restricționat</h2>
-                <p className="text-stone-600 dark:text-stone-400 mb-8 max-w-md text-center">Trebuie să fii autentificat pentru a accesa setările profilului tău și lista de preferințe.</p>
+                <p className="text-stone-600 dark:text-stone-400 mb-8 max-w-md text-center">Trebuie să fii autentificat pentru a accesa setările profilului tău.</p>
                 <div className="flex gap-4">
                     {/* Presupunând că login-ul se face dintr-o altă pagină, poți adapta un <Link> aici */}
                     <button onClick={() => window.location.href = '/login'} className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition-all shadow-md">
@@ -173,10 +150,7 @@ const Profil = ({ inapoiLaHome }) => {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    
-                    {/* SETĂRI CONT - Col 1 */}
-                    <div className="lg:col-span-1 space-y-8">
+                <div className="max-w-2xl mx-auto space-y-8">
                         {/* Date Personale */}
                         <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-stone-100 dark:border-slate-700 transition-colors">
                             <div className="flex items-center gap-3 mb-6">
@@ -230,62 +204,7 @@ const Profil = ({ inapoiLaHome }) => {
                         </div>
                     </div>
 
-                    {/* WISHLIST SECȚIUNE - Col 2&3 */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-stone-100 dark:border-slate-700 transition-colors h-full">
-                            <div className="flex items-center justify-between border-b border-stone-100 dark:border-slate-700/70 pb-5 mb-8">
-                                <h3 className="text-2xl font-serif font-bold text-anthracite dark:text-stone-100 flex items-center gap-3">
-                                    <svg className="w-6 h-6 text-red-500 fill-red-500" fill="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                                    Colecția Mea (Wishlist)
-                                </h3>
-                                <div className="text-sm text-stone-500 dark:text-stone-400 font-medium">
-                                    {wishlist.length} {wishlist.length === 1 ? 'Titlu Salvat' : 'Titluri Salvate'}
-                                </div>
-                            </div>
 
-                            {wishlist.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-20 text-center">
-                                    <div className="w-24 h-24 mb-6 rounded-full bg-stone-50 dark:bg-slate-900 flex items-center justify-center">
-                                        <svg className="w-10 h-10 text-stone-300 dark:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                                    </div>
-                                    <h4 className="text-xl font-bold text-anthracite dark:text-stone-300 mb-2">Nu ai salvat nicio carte</h4>
-                                    <p className="text-stone-500 dark:text-stone-500 max-w-sm mb-6">Apasă pe inima din colțul oricărei cărți pentru a o adăuga în lista ta privată.</p>
-                                    <button onClick={inapoiLaHome} className="px-6 py-2.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold rounded-xl hover:bg-amber-500 hover:text-white transition-all">
-                                        Explorează Magazinul
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    {wishlist.map((carte) => (
-                                        <div key={carte._id} className="group flex gap-4 bg-stone-50 dark:bg-slate-900 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500 transition-all duration-300 relative">
-                                            
-                                            <div className="w-20 h-28 flex-shrink-0">
-                                                <img src={carte.imagine_url} alt={carte.titlu} className="w-full h-full object-cover rounded-md shadow-md" />
-                                            </div>
-                                            
-                                            <div className="flex flex-col justify-center flex-grow pr-6">
-                                                <p className="text-[10px] uppercase text-stone-500 font-bold mb-1">{carte.autor}</p>
-                                                <h4 className="text-base font-serif font-bold text-anthracite dark:text-stone-100 line-clamp-2 leading-tight mb-2">{carte.titlu}</h4>
-                                                <span className="inline-block mt-auto text-amber-600 dark:text-amber-500 font-bold text-sm bg-amber-50 dark:bg-slate-800 px-2.5 py-1 rounded-md w-max border border-amber-100 dark:border-slate-700">
-                                                    {carte.pret} RON
-                                                </span>
-                                            </div>
-
-                                            <button 
-                                                onClick={() => eliminaDinWishlist(carte._id)}
-                                                className="absolute top-4 right-4 p-2 text-stone-400 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 sm:opacity-100"
-                                                title="Elimină din Wishlist"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                </div>
             </div>
         </div>
     );

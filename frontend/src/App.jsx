@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import DetaliiCarte from './DetaliiCarte';
 import Profil from './pages/Profil';
+import WishlistDrawer from './components/WishlistDrawer';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 function App() {
@@ -12,29 +13,72 @@ function App() {
     const [numeUtilizator, setNumeUtilizator] = useState(localStorage.getItem('nume')); 
     const [userId, setUserId] = useState(localStorage.getItem('userId')); 
     const [vizualizare, setVizualizare] = useState('magazin');
-    const [cos, setCos] = useState([]);
+    const [cos, setCos] = useState(() => {
+        const saved = localStorage.getItem('cos');
+        return saved ? JSON.parse(saved) : [];
+    });
     const [arataCos, setArataCos] = useState(false);
+    
+    // START WISHLIST ADDITION
+    const [wishlist, setWishlist] = useState(() => {
+        const saved = localStorage.getItem('wishlist');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [arataWishlist, setArataWishlist] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    }, [wishlist]);
+    
+    useEffect(() => {
+        localStorage.setItem('cos', JSON.stringify(cos));
+    }, [cos]);
+    // END WISHLIST ADDITION
+
     const [termenCautare, setTermenCautare] = useState(''); 
     const [isDarkMode, setIsDarkMode] = useState(false);
 
+    const token = localStorage.getItem('token');
     useEffect(() => {
         const id = localStorage.getItem('userId');
         setRolUtilizator(localStorage.getItem('rol'));
         setNumeUtilizator(localStorage.getItem('nume'));
         setUserId(id);
 
-        if (id) {
+        if (token) {
             const fetchCos = async () => {
                 try {
-                    const response = await axios.get(`http://localhost:5000/api/cos/${id}`);
-                    setCos(response.data.produse || []);
+                    const response = await axios.get('http://localhost:5000/api/user/cos', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (response.data) {
+                        const parsedCos = response.data.map(p => ({
+                            ...p.carte,
+                            cantitate: p.cantitate
+                        }));
+                        setCos(parsedCos);
+                    }
                 } catch (error) {
                     console.error("Eroare la aducerea coșului din baza de date:", error);
                 }
             };
             fetchCos();
+
+            const fetchWishlist = async () => {
+                try {
+                    const response = await axios.get('http://localhost:5000/api/user/wishlist', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (response.data) {
+                        setWishlist(response.data.map(w => w._id || w));
+                    }
+                } catch (error) {
+                    console.error("Eroare la aducerea wishlist-ului din baza de date:", error);
+                }
+            };
+            fetchWishlist();
         }
-    }, [rolUtilizator]);
+    }, [token]);
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme');
@@ -62,11 +106,20 @@ function App() {
     };
 
     const handleDelogare = () => {
-        localStorage.clear();
+        localStorage.removeItem('token');
+        localStorage.removeItem('rol');
+        localStorage.removeItem('nume');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('cos');
+        localStorage.removeItem('wishlist');
+
         setRolUtilizator(null);
         setNumeUtilizator(null);
         setUserId(null); 
+        setCos([]);
+        setWishlist([]);
         setArataCos(false);
+        setArataWishlist(false);
         setVizualizare('magazin');
         setTermenCautare('');
     };
@@ -85,7 +138,7 @@ function App() {
                                         onClick={() => { setVizualizare('magazin'); setArataCos(false); setTermenCautare(''); }}
                                         className="text-3xl font-serif font-bold tracking-tight text-amber-900 dark:text-amber-500 hover:text-amber-700 transition-colors"
                                     >
-                                        InkWell
+                                        BookIo
                                     </Link>
                                 </div>
 
@@ -135,12 +188,26 @@ function App() {
                                     {/* Cart Button */}
                                     {vizualizare === 'magazin' && (
                                         <button 
-                                            onClick={() => setArataCos(!arataCos)} 
+                                            onClick={() => { setArataCos(!arataCos); setArataWishlist(false); }} 
                                             className="text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors relative"
                                         >
                                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                                             <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                                                 {cos.reduce((total, produs) => total + (produs.cantitate || 1), 0)}
+                                            </span>
+                                        </button>
+                                    )}
+
+                                    {/* Wishlist Button */}
+                                    {vizualizare === 'magazin' && (
+                                        <button 
+                                            onClick={() => { setArataWishlist(!arataWishlist); setArataCos(false); }} 
+                                            className="text-anthracite dark:text-stone-300 hover:text-red-500 transition-colors relative ml-2"
+                                            title="Wishlist"
+                                        >
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                                                {wishlist.length}
                                             </span>
                                         </button>
                                     )}
@@ -193,7 +260,10 @@ function App() {
                                         arataCos={arataCos}
                                         setArataCos={setArataCos}
                                         termenCautare={termenCautare}
-                                        userId={userId} 
+                                        userId={userId}
+                                        wishlist={wishlist}
+                                        setWishlist={setWishlist}
+                                        rolUtilizator={rolUtilizator}
                                     />
                                 } />
 
@@ -213,6 +283,9 @@ function App() {
                                 <Route path="/profil" element={<Profil inapoiLaHome={() => { setVizualizare('magazin'); window.location.href = '/'; }} />} />
                             </Routes>
                         </main>
+
+                        {/* WISHLIST DRAWER */}
+                        <WishlistDrawer deschis={arataWishlist} setDeschis={setArataWishlist} wishlist={wishlist} setWishlist={setWishlist} />
             </div>
         </Router>
     );

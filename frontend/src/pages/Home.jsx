@@ -5,31 +5,17 @@ import 'react-toastify/dist/ReactToastify.css';
 import Profil from './Profil';
 import { Link } from 'react-router-dom';
 
-function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
+function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishlist, setWishlist }) {
     const [carti, setCarti] = useState([]); 
     const [arataProfil, setArataProfil] = useState(false);
     
-    // Inițializare wishlist din localStorage, altfel []
-    const [wishlist, setWishlist] = useState(() => {
-        const saved = localStorage.getItem('wishlist');
-        return saved ? JSON.parse(saved) : [];
-    });
-
-    const [arataFormular, setArataFormular] = useState(false);
-    const [idEditare, setIdEditare] = useState(null); 
-    const [dateFormular, setDateFormular] = useState({
-        isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: ''
-    });
     const [categorieSelectata, setCategorieSelectata] = useState('Toate');
     const [criteriuSortare, setCriteriuSortare] = useState('default');
+    
+    // Stari pentru checkout
     const [metodaPlata, setMetodaPlata] = useState('ramburs'); 
     const [dateLivrare, setDateLivrare] = useState({ nume: '', adresa: '', telefon: '' });
     const [dateCard, setDateCard] = useState({ numar: '', expirare: '', cvv: '' });
-
-    // Când wishlist se schimbă, îl salvăm în localStorage
-    useEffect(() => {
-        localStorage.setItem('wishlist', JSON.stringify(wishlist));
-    }, [wishlist]);
 
     useEffect(() => {
         fetchCarti();
@@ -45,54 +31,17 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
         }
     };
 
-    const salveazaCarte = async (e) => {
-        e.preventDefault(); 
-        try {
-            if (idEditare) {
-                await axios.put(`http://localhost:5000/api/carti/${idEditare}`, dateFormular);
-                toast.success('Cartea a fost actualizată!');
-            } else {
-                await axios.post('http://localhost:5000/api/carti', dateFormular);
-                toast.success('Cartea a fost adăugată!');
-            }
-            anuleazaFormular(); 
-            fetchCarti();       
-        } catch (error) {
-            toast.error('Eroare la salvare!');
-        }
-    };
-
-    const deschideEditare = (carte) => {
-        setDateFormular({
-            isbn: carte.isbn, titlu: carte.titlu, autor: carte.autor, editura: carte.editura, 
-            categorie: carte.categorie || '', pret: carte.pret, stoc: carte.stoc, imagine_url: carte.imagine_url
-        });
-        setIdEditare(carte._id); 
-        setArataFormular(true);  
-        setArataCos(false); 
-        setArataProfil(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' }); 
-    };
-
-    const stergeCarte = async (id) => {
-        if (window.confirm("Ești sigur că vrei să ștergi această carte?")) {
+    const toggleWishlist = async (carteId) => {
+        const token = localStorage.getItem('token');
+        if (token) {
             try {
-                await axios.delete(`http://localhost:5000/api/carti/${id}`);
-                toast.success("Cartea a fost ștearsă!");
-                fetchCarti(); 
+                await axios.post('http://localhost:5000/api/user/wishlist/toggle', { carteId }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
             } catch (error) {
-                toast.error("Eroare la ștergere!");
+                console.error("Eroare validare wishlist db", error);
             }
         }
-    };
-
-    const anuleazaFormular = () => {
-        setArataFormular(false);
-        setIdEditare(null);
-        setDateFormular({ isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: '' });
-    };
-
-    const toggleWishlist = (carteId) => {
         setWishlist((prevWishlist) => {
             if (prevWishlist.includes(carteId)) {
                 return prevWishlist.filter(id => id !== carteId);
@@ -100,19 +49,49 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
                 return [...prevWishlist, carteId];
             }
         });
+        toast[wishlist.includes(carteId) ? 'info' : 'success'](
+            wishlist.includes(carteId) ? 'Eliminată din Wishlist' : 'Adăugată în Wishlist',
+            { autoClose: 2000 }
+        );
     };
 
-    const adaugaInCos = (carte) => {
+    const adaugaInCos = async (carte) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                await axios.post('http://localhost:5000/api/user/cos/adauga', { carteId: carte._id, cantitate: 1 }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } catch (error) {
+                console.error("Eroare adaugare cos db", error);
+            }
+        }
         const existaInCos = cos.find(item => item._id === carte._id);
         if (existaInCos) {
             setCos(cos.map(item => item._id === carte._id ? { ...item, cantitate: item.cantitate + 1 } : item));
         } else {
             setCos([...cos, { ...carte, cantitate: 1 }]);
         }
-        toast.success(`"${carte.titlu}" a fost adăugată în coș!`);
+        toast.success(`"${carte.titlu}" a fost adăugată în coș!`, { autoClose: 2000 });
     };
 
-    const modificaCantitate = (id, delta) => {
+    const modificaCantitate = async (id, delta) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                if (delta > 0) {
+                    await axios.post('http://localhost:5000/api/user/cos/adauga', { carteId: id, cantitate: delta }, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                } else {
+                    await axios.post('http://localhost:5000/api/user/cos/sterge', { carteId: id, stergeDeTot: false }, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                }
+            } catch (error) {
+                console.error("Eroare modificare cantitate db", error);
+            }
+        }
         setCos(cos.map(item => {
             if (item._id === id) {
                 const nouaCantitate = item.cantitate + delta;
@@ -122,7 +101,17 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
         }));
     };
 
-    const eliminaDinCos = (id) => {
+    const eliminaDinCos = async (id) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                await axios.post('http://localhost:5000/api/user/cos/sterge', { carteId: id, stergeDeTot: true }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } catch (error) {
+                console.error("Eroare stergere cos db", error);
+            }
+        }
         setCos(cos.filter(item => item._id !== id));
         toast.error('Produs eliminat din coș.');
     };
@@ -132,7 +121,6 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
     const plaseazaComanda = async (e) => {
         e.preventDefault();
 
-        // GUEST CHECK
         if (!userId && !localStorage.getItem('rol')) {
             toast.error("Trebuie să fii autentificat pentru a plasa o comandă!");
             setTimeout(() => {
@@ -184,8 +172,8 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
                 ) : (
                     <>
                         <div className="pt-8 px-6 md:px-12 max-w-7xl mx-auto min-h-screen">
-                            {/* CATEGORIES & FILTERS SECTION */}
-                            {!arataCos && !arataFormular && (
+                            {/* CATEGORIES & FILTERS */}
+                            {!arataCos && (
                                 <section className="mb-12">
                                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
                                         <h2 className="text-3xl font-serif font-bold text-anthracite dark:text-stone-100 transition-colors duration-300">
@@ -208,7 +196,20 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
                                     </div>
 
                                     <div className="flex space-x-4 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-hide">
-                                        {categoriiDisponibile.map(cat => (
+                                        {/* Butonul TOATE cu numarul total */}
+                                        <button 
+                                            onClick={() => setCategorieSelectata('Toate')}
+                                            className={`flex-shrink-0 px-6 py-3 rounded-full font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
+                                                categorieSelectata === 'Toate' 
+                                                ? 'bg-amber-500 text-white shadow-md' 
+                                                : 'bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-stone-600 dark:text-stone-300 hover:border-amber-500 dark:hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-500'
+                                            }`}
+                                        >
+                                            Toate <span className="ml-1 opacity-70 text-sm font-bold">({carti.length})</span>
+                                        </button>
+
+                                        {/* Butoanele pentru restul categoriilor */}
+                                        {categoriiDisponibile.filter(cat => cat !== 'Toate').map(cat => (
                                             <button
                                                 key={cat}
                                                 onClick={() => setCategorieSelectata(cat)}
@@ -218,37 +219,11 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
                                                     : 'bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-stone-600 dark:text-stone-300 hover:border-amber-500 dark:hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-500'
                                                 }`}
                                             >
-                                                {cat}
+                                                {cat} <span className="ml-1 opacity-70 text-sm font-bold">({carti.filter(c => c.categorie === cat).length})</span>
                                             </button>
                                         ))}
                                     </div>
                                 </section>
-                            )}
-
-                            {/* ADMIN FORM */}
-                            {arataFormular && !arataCos && (
-                                <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg mb-10 border border-stone-200 dark:border-slate-700 transition-colors duration-300">
-                                    <h3 className="text-xl font-bold mb-6 text-anthracite dark:text-stone-100 border-b border-stone-100 dark:border-slate-700 pb-3">
-                                        {idEditare ? '✏️ Editează detaliile cărții' : '➕ Adaugă o carte nouă'}
-                                    </h3>
-                                    <form onSubmit={salveazaCarte} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                        {['isbn', 'titlu', 'autor', 'editura', 'categorie'].map(camp => (
-                                            <input key={camp} type="text" placeholder={camp.charAt(0).toUpperCase() + camp.slice(1)} required value={dateFormular[camp]} onChange={(e) => setDateFormular({...dateFormular, [camp]: e.target.value})} className="w-full px-4 py-2 bg-stone-50 dark:bg-slate-900 border border-stone-200 dark:border-slate-600 rounded-lg text-anthracite dark:text-stone-200 focus:ring-2 focus:ring-amber-500 focus:outline-none transition-colors" />
-                                        ))}
-                                        <input type="number" placeholder="Preț (RON)" required value={dateFormular.pret} onChange={(e) => setDateFormular({...dateFormular, pret: e.target.value})} className="w-full px-4 py-2 bg-stone-50 dark:bg-slate-900 border border-stone-200 dark:border-slate-600 rounded-lg text-anthracite dark:text-stone-200 focus:ring-2 focus:ring-amber-500 focus:outline-none transition-colors" />
-                                        <input type="number" placeholder="Stoc (Buc)" required value={dateFormular.stoc} onChange={(e) => setDateFormular({...dateFormular, stoc: e.target.value})} className="w-full px-4 py-2 bg-stone-50 dark:bg-slate-900 border border-stone-200 dark:border-slate-600 rounded-lg text-anthracite dark:text-stone-200 focus:ring-2 focus:ring-amber-500 focus:outline-none transition-colors" />
-                                        <input type="text" placeholder="Link Imagine" required value={dateFormular.imagine_url} onChange={(e) => setDateFormular({...dateFormular, imagine_url: e.target.value})} className="w-full px-4 py-2 bg-stone-50 dark:bg-slate-900 border border-stone-200 dark:border-slate-600 rounded-lg text-anthracite dark:text-stone-200 focus:ring-2 focus:ring-amber-500 focus:outline-none lg:col-span-2 transition-colors" />
-                                        
-                                        <div className="lg:col-span-3 flex gap-3 mt-2">
-                                            <button type="submit" className={`px-6 py-2.5 rounded-lg font-bold text-white transition ${idEditare ? 'bg-amber-600 hover:bg-amber-700' : 'bg-amber-500 hover:bg-amber-600'}`}>
-                                                {idEditare ? 'Salvează Modificările' : 'Salvează Cartea'}
-                                            </button>
-                                            <button type="button" onClick={anuleazaFormular} className="px-6 py-2.5 bg-stone-200 dark:bg-slate-700 hover:bg-stone-300 dark:hover:bg-slate-600 text-stone-800 dark:text-stone-200 rounded-lg font-medium transition">
-                                                Anulează
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
                             )}
 
                             {/* CHECKOUT / COS */}
@@ -389,6 +364,12 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
                             ) : (
                                 /* GRILA DE CĂRȚI (PREMIUM DESIGN) */
                                 <>
+                                    {/* NOU: Textul care arata numarul de produse filtrate */}
+                                    <div className="mb-4 text-stone-500 dark:text-stone-400 font-medium text-sm flex items-center gap-2">
+                                        <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Afișăm {cartiProcesate.length} {cartiProcesate.length === 1 ? 'produs' : 'produse'} în categoria "{categorieSelectata}"
+                                    </div>
+
                                     {cartiProcesate.length === 0 ? (
                                         <div className="text-center py-16">
                                             <p className="text-2xl text-stone-500 dark:text-stone-400 mb-2">😕 Nu am găsit nicio carte care să corespundă criteriilor.</p>
@@ -397,74 +378,82 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-10" data-purpose="product-grid">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-4" data-purpose="product-grid">
                                             {cartiProcesate.map((carte) => (
                                                 <div key={carte._id} className="group relative bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-[0_20px_25px_-5px_rgba(0,0,0,0.05),0_10px_10px_-5px_rgba(0,0,0,0.02)] dark:shadow-none dark:border dark:border-slate-700/50 transition-all duration-500" data-purpose="book-card">
                                                     
-                                                    <div className="relative mb-4">
+                                                    <div className="relative mb-4 group/image overflow-hidden rounded-xl">
                                                         <Link to={`/carte/${carte._id}`}>
-                                                            {/* Asymmetric Overlapping Cover cu Link */}
-                                                            <div className="absolute top-0 left-0 w-3/4 aspect-[2/3] -translate-y-5 -translate-x-2.5 group-hover:-translate-y-7 group-hover:-translate-x-3 group-hover:scale-105 transition-all duration-500 z-10">
-                                                                <img alt={carte.titlu} className="w-full h-full object-cover rounded-md shadow-2xl dark:shadow-slate-950/50" src={carte.imagine_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600&auto=format&fit=crop"}/>
+                                                            <div className="w-full aspect-[2/3] transition-all duration-500 z-10 bg-stone-100 dark:bg-slate-700">
+                                                                <img alt={carte.titlu} className="w-full h-full object-cover shadow-xl dark:shadow-slate-950/50 group-hover/image:scale-105 transition-transform duration-700 ease-out" src={carte.imagine_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600&auto=format&fit=crop"}/>
                                                             </div>
                                                         </Link>
-                                                        <div className="aspect-[2/3] w-3/4 opacity-0 pointer-events-none"></div>
-                                                        
-                                                        {/* Buton Wishlist */}
-                                                        <button 
-                                                            onClick={(e) => { e.preventDefault(); toggleWishlist(carte._id); }}
-                                                            className="absolute top-2 right-2 z-20 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-2 rounded-full hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
-                                                        >
-                                                            <svg 
-                                                                className={`w-5 h-5 transition-colors ${wishlist.includes(carte._id) ? 'text-red-500 fill-red-500' : 'text-stone-400 dark:text-stone-500 hover:text-red-400'}`} 
-                                                                fill={wishlist.includes(carte._id) ? 'currentColor' : 'none'} 
-                                                                stroke="currentColor" 
-                                                                viewBox="0 0 24 24"
-                                                            >
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                                                            </svg>
-                                                        </button>
 
                                                         {/* Status Badges */}
-                                                        <div className="absolute top-12 right-0 z-20 flex flex-col items-end gap-2">
+                                                        <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-2 pointer-events-none">
                                                             {carte.stoc <= 3 && carte.stoc > 0 && (
-                                                                <span className="px-3 py-1 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold rounded-md border border-red-100 dark:border-red-900/50 uppercase tracking-tight">Doar {carte.stoc} în stoc</span>
+                                                                <span className="px-3 py-1 bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold rounded-md border border-red-100 dark:border-red-900/50 uppercase tracking-tight shadow-sm backdrop-blur-sm">Doar {carte.stoc} în stoc</span>
                                                             )}
-                                                            <span className="px-3 py-1 bg-amber-50 dark:bg-slate-700 text-amber-700 dark:text-amber-400 text-xs font-bold rounded-md border border-amber-100 dark:border-slate-600">{carte.pret} Lei</span>
+                                                        </div>
+
+                                                        {/* Hover Overlay Buttons */}
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 backdrop-blur-[2px] transition-all duration-300 flex items-center justify-center gap-4 z-20 pointer-events-none group-hover/image:pointer-events-auto">
+                                                            
+                                                            <Link 
+                                                                to={`/carte/${carte._id}`}
+                                                                className="p-3 rounded-full bg-white/90 text-stone-600 hover:text-amber-500 hover:bg-white shadow-lg transition-transform hover:scale-110"
+                                                                title="Vezi detalii"
+                                                            >
+                                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                </svg>
+                                                            </Link>
+
+                                                            {/* Buton Wishlist cu oprire propagare */}
+                                                            <button 
+                                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(carte._id); }}
+                                                                className={`p-3 rounded-full shadow-lg transition-transform hover:scale-110 ${wishlist.includes(carte._id) ? 'bg-white text-red-500' : 'bg-white/90 text-stone-600 hover:text-red-500 hover:bg-white'}`}
+                                                                title={wishlist.includes(carte._id) ? "Elimină din wishlist" : "Adaugă în wishlist"}
+                                                            >
+                                                                <svg className="w-6 h-6" fill={wishlist.includes(carte._id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                                                </svg>
+                                                            </button>
+
+                                                            {/* Buton Cart cu oprire propagare */}
+                                                            {carte.stoc > 0 ? (
+                                                                <button 
+                                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); adaugaInCos(carte); }} 
+                                                                    className="p-3 rounded-full bg-amber-500 text-white shadow-lg transition-transform hover:scale-110 hover:bg-amber-400"
+                                                                    title="Adaugă în coș"
+                                                                >
+                                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+                                                                    </svg>
+                                                                </button>
+                                                            ) : (
+                                                                <button disabled className="p-3 rounded-full bg-stone-500/80 text-white shadow-lg cursor-not-allowed">
+                                                                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
 
-                                                    <div className="mt-8 transition-colors duration-300">
+                                                    <div className="mt-8 transition-colors duration-300 flex flex-col items-center h-full text-center">
                                                         <p className="text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-semibold mb-1">{carte.autor}</p>
-                                                        <h3 className="text-xl font-serif font-bold text-anthracite dark:text-stone-100 line-clamp-1">{carte.titlu}</h3>
-                                                        <p className="text-sm text-stone-500 dark:text-stone-400 mt-2 line-clamp-2">Editura: {carte.editura} | Categorie: {carte.categorie}</p>
-                                                    </div>
+                                                        
+                                                        <Link to={`/carte/${carte._id}`}>
+                                                            <h3 className="text-xl font-serif font-bold text-anthracite dark:text-stone-100 line-clamp-1 hover:text-amber-500 transition-colors">
+                                                                {carte.titlu}
+                                                            </h3>
+                                                        </Link>
 
-                                                    {/* Animated Button */}
-                                                    <div className="mt-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                                                        {carte.stoc > 0 ? (
-                                                            <button onClick={(e) => { e.preventDefault(); adaugaInCos(carte); }} className="w-full py-3 bg-cream dark:bg-slate-700/50 text-anthracite dark:text-stone-200 border border-stone-200 dark:border-slate-600 rounded-xl font-medium hover:bg-amber-500 dark:hover:bg-amber-500 hover:text-white dark:hover:text-white hover:border-amber-500 dark:hover:border-amber-500 transition-all flex items-center justify-center gap-2 shadow-sm">
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                                                                Adaugă în coș
-                                                            </button>
-                                                        ) : (
-                                                            <button disabled className="w-full py-3 bg-stone-100 dark:bg-slate-800 text-stone-400 dark:text-stone-500 border border-stone-200 dark:border-slate-700 rounded-xl font-medium cursor-not-allowed flex items-center justify-center transition-all">
-                                                                Stoc Epuizat
-                                                            </button>
-                                                        )}
-                                                    </div>
-
-                                                    {localStorage.getItem('rol') === 'admin' && (
-                                                        <div className="flex gap-2 mt-4 pt-4 border-t border-stone-100 dark:border-slate-700">
-                                                            <button onClick={() => deschideEditare(carte)} className="flex-1 bg-stone-100 dark:bg-slate-700 hover:bg-stone-200 dark:hover:bg-slate-600 text-stone-600 dark:text-stone-300 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors">
-                                                                Editează
-                                                            </button>
-                                                            <button onClick={() => stergeCarte(carte._id)} className="flex-1 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors">
-                                                                Șterge
-                                                            </button>
+                                                        <p className="text-sm text-stone-500 dark:text-stone-400 mt-2 line-clamp-1">Editura: {carte.editura}</p>
+                                                        <div className="mt-4 pt-3 flex items-center justify-center w-full">
+                                                            <span className="text-2xl font-black text-amber-600 dark:text-amber-500">{carte.pret} <span className="text-base font-bold opacity-80">RON</span></span>
                                                         </div>
-                                                    )}
-
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -513,7 +502,7 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId }) {
                     </div>
                 </div>
                 <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-stone-800 dark:border-slate-800 text-xs text-stone-500 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors duration-300">
-                    <p>© 2024 InkWell Boutique. Creat cu pasiune pentru cititori.</p>
+                    <p>© 2024 BookIo Boutique. Creat cu pasiune pentru cititori.</p>
                     <div className="flex space-x-6">
                         <a className="hover:text-white transition-colors" href="#">Politică de Confidențialitate</a>
                         <a className="hover:text-white transition-colors" href="#">Termeni și Condiții</a>
