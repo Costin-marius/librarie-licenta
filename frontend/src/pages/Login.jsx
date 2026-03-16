@@ -114,7 +114,7 @@ function Login({ setRolUtilizator, setVizualizare, setNumeUtilizator }) {
                 className="absolute inset-0 z-0"
             />
 
-            <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+            <ToastContainer position="bottom-right" autoClose={3000} theme="dark" />
 
             {/* Cutia principală de login (glassmorphism) */}
             <div className="max-w-md w-full bg-gray-900/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-gray-800 relative z-10">

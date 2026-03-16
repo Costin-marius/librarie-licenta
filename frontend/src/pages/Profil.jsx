@@ -121,7 +121,7 @@ const Profil = ({ inapoiLaHome }) => {
 
     return (
         <div className="w-full bg-ivory dark:bg-slate-900 transition-colors duration-300 font-sans pb-20">
-            <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+            <ToastContainer position="bottom-right" autoClose={3000} theme="dark" />
             
             <div className="max-w-6xl mx-auto">
                 {/* Header Profil */}
