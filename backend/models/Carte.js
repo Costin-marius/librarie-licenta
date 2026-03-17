@@ -53,12 +53,13 @@ const carteSchema = new mongoose.Schema({
         type: Number,
         required: false
     },
-    // --- NOU: Partea pentru Rating ---
+    
+    // --- 1. RATINGUL TĂU ORIGINAL (Doar steluțe, 1-5) ---
     ratinguri: [
         {
             utilizator: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'User', // Face legătura cu utilizatorul care a lăsat recenzia
+                ref: 'User',
                 required: true
             },
             nota: {
@@ -76,17 +77,38 @@ const carteSchema = new mongoose.Schema({
     numarRecenzii: {
         type: Number,
         default: 0
-    }
+    },
+
+    // --- 2. NOU: PARTEA PENTRU DISCUȚII / COMENTARII TEXT ---
+    comentarii: [
+        {
+            utilizator: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+                required: true
+            },
+            numeUtilizator: {
+                type: String,
+                required: true
+            },
+            text: {
+                type: String,
+                required: true
+            },
+            data: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ]
 }, { timestamps: true });
 
 // --- metode ---
 
-// + verificaStoc(cantitate) : Boolean
 carteSchema.methods.verificaStoc = function(cantitateCeruta) {
     return this.stoc >= cantitateCeruta;
 };
 
-// + scadeStoc(cantitate) : void
 carteSchema.methods.scadeStoc = async function(cantitateVanduta) {
     if (this.verificaStoc(cantitateVanduta)) {
         this.stoc -= cantitateVanduta;
@@ -96,19 +118,17 @@ carteSchema.methods.scadeStoc = async function(cantitateVanduta) {
     }
 };
 
-// + getPret() : double
 carteSchema.methods.getPret = function() {
     return this.pret;
 };
 
-// --- NOU: Metodă pentru a recalcula automat media notelor ---
+// --- Metoda ta originală pentru calculul steluțelor ---
 carteSchema.methods.calculeazaRating = async function() {
     if (this.ratinguri.length === 0) {
         this.ratingMediu = 0;
         this.numarRecenzii = 0;
     } else {
-        const sumaNote = this.ratinguri.reduce((total, recenzie) => total + recenzie.nota, 0);
-        // Calculăm media și o rotunjim la o zecimală (ex: 4.5)
+        const sumaNote = this.ratinguri.reduce((total, rating) => total + rating.nota, 0);
         this.ratingMediu = parseFloat((sumaNote / this.ratinguri.length).toFixed(1));
         this.numarRecenzii = this.ratinguri.length;
     }

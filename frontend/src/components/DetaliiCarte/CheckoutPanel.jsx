@@ -9,12 +9,25 @@ function CheckoutPanel({ carte, isInWishlist, handleAdaugaInCos, handleToggleWis
                 {carte.pret} lei
             </div>
 
-            {/* Stoc */}
-            <div className="mb-6">
-                <span className="inline-block px-3 py-1 bg-green-900/30 text-green-400 text-xs font-bold rounded border border-green-800/50 uppercase tracking-wide">
-                    În stoc ({carte.stoc || 0} buc)
-                </span>
-            </div>
+            {localStorage.getItem('rol') === 'admin' ? (
+                <div className="text-blue-400 font-semibold text-sm mb-6">
+                    🛠️ Stoc intern (Admin): {carte.stoc} buc.
+                </div>
+            ) : (
+                <div className="text-sm mb-6">
+                    {carte.stoc > 10 && (
+                        <span className="text-green-500 font-semibold">✓ În stoc</span>
+                    )}
+                    {carte.stoc > 0 && carte.stoc <= 10 && (
+                        <span className="text-orange-500 font-semibold">
+                            🔥 Ultimele {carte.stoc} bucăți!
+                        </span>
+                    )}
+                    {carte.stoc === 0 && (
+                        <span className="text-red-500 font-semibold">Stoc epuizat</span>
+                    )}
+                </div>
+            )}
 
             {/* Buton Adaugă în Coș */}
             <button

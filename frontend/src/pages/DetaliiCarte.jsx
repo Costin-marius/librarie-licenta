@@ -10,17 +10,22 @@ import Recomandari from '../components/DetaliiCarte/Recomandari';
 
 function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
     const { id } = useParams();
-    
+
     // State-uri
     const [carte, setCarte] = useState(null);
     const [loading, setLoading] = useState(true);
     const [recomandari, setRecomandari] = useState([]);
     const [userRating, setUserRating] = useState(0);
 
+    // NOU: State-uri pentru comentarii
+    const [textComentariu, setTextComentariu] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     // 1. Efectul principal
     useEffect(() => {
         window.scrollTo(0, 0);
         setLoading(true);
+
         fetch(`http://localhost:5000/api/carti/${id}`)
             .then(response => {
                 if (!response.ok) throw new Error("Cartea nu a fost găsită pe server");
@@ -29,7 +34,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
             .then(data => {
                 setCarte(data);
                 setLoading(false);
-                
+
                 if (userId && data.ratinguri) {
                     const ratingExistent = data.ratinguri.find(r => r.utilizator === userId);
                     if (ratingExistent) {
@@ -65,7 +70,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
     // 3. Funcție adăugare în coș
     const adaugaInCosGlobal = async (carteToAdd) => {
         if (!carteToAdd) return;
-        
+
         setCos((prevCos) => {
             const existaInCos = prevCos.find(item => item._id === carteToAdd._id);
             if (existaInCos) {
@@ -74,18 +79,15 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
                 return [...prevCos, { ...carteToAdd, cantitate: 1 }];
             }
         });
-        
+
         toast.success(`"${carteToAdd.titlu}" a fost adăugată în coș! 🛒`);
-        
+
         const token = localStorage.getItem('token');
         if (token) {
             try {
                 await fetch('http://localhost:5000/api/user/cos/adauga', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ carteId: carteToAdd._id, cantitate: 1 })
                 });
             } catch (eroare) {
@@ -97,13 +99,13 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
     // 4. Funcție Wishlist
     const toggleWishlistGlobal = async (carteId) => {
         if (!carteId) return;
+
         const token = localStorage.getItem('token');
-        
         if (!token) {
             toast.error("Trebuie să intri în cont ca să salvezi la favorite!");
             return;
         }
-        
+
         const wasWishlisted = wishlist.includes(carteId);
         setWishlist((prevWishlist) => {
             if (prevWishlist.includes(carteId)) {
@@ -116,10 +118,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
         try {
             const response = await fetch('http://localhost:5000/api/user/wishlist/toggle', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ carteId: carteId })
             });
 
@@ -139,7 +138,6 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
     // 5. Funcție Rating
     const handleRating = async (nota) => {
         let idUtilizator = userId || localStorage.getItem('userId');
-
         if (!idUtilizator) {
             toast.error("Trebuie să fii logat pentru a lăsa o recenzie! 🔒");
             return;
@@ -151,22 +149,54 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: idUtilizator, nota: nota })
             });
-            const data = await response.json();
 
+            const data = await response.json();
             if (response.ok) {
                 toast.success("Recenzia ta a fost salvată! ⭐");
-                setUserRating(nota); 
-                setCarte(prev => ({ 
-                    ...prev, 
-                    ratingMediu: data.ratingMediu, 
-                    numarRecenzii: data.numarRecenzii 
-                }));
+                setUserRating(nota);
+                setCarte(prev => ({ ...prev, ratingMediu: data.ratingMediu, numarRecenzii: data.numarRecenzii }));
             } else {
                 toast.error(data.mesaj || "Eroare la salvarea recenziei.");
             }
         } catch (error) {
             console.error("Eroare rating:", error);
             toast.error("Eroare de conexiune cu serverul.");
+        }
+    };
+
+    // 6. Funcție Adăugare Comentariu Text
+    const handleAdaugaComentariu = async (e) => {
+        e.preventDefault();
+        if (!textComentariu.trim()) return;
+
+        setIsSubmitting(true);
+        try {
+            const nume = localStorage.getItem('nume') || 'Utilizator';
+
+            const response = await fetch(`http://localhost:5000/api/carti/${carte._id}/comentariu`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: userId || localStorage.getItem('userId'),
+                    numeUtilizator: nume,
+                    text: textComentariu
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                toast.success("Comentariul tău a fost publicat!");
+                setTextComentariu("");
+                setCarte(prev => ({ ...prev, comentarii: data.comentarii }));
+            } else {
+                toast.error(data.mesaj || "Eroare la postarea comentariului.");
+            }
+        } catch (error) {
+            console.error("Eroare comentariu:", error);
+            toast.error("Eroare de conexiune cu serverul.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -177,7 +207,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
     return (
         <div className="min-h-screen bg-gray-950 p-4 md:p-8 w-full font-sans overflow-auto flex-1">
             <ToastContainer position="bottom-right" autoClose={3000} theme="dark" />
-            
+
             {/* Breadcrumbs */}
             <div className="max-w-5xl mx-auto mb-6 flex items-center gap-2 text-sm text-gray-500 font-medium">
                 <Link to="/" className="hover:text-blue-400 transition flex items-center gap-1">
@@ -189,32 +219,23 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
                 <span className="text-gray-300 font-semibold">{carte.titlu}</span>
             </div>
 
-            <div className="max-w-5xl mx-auto bg-gray-900 rounded-lg shadow-lg border border-gray-800 overflow-hidden mb-12">
+            {/* Caseta cu detaliile cărții */}
+            <div className="max-w-5xl mx-auto bg-gray-900 rounded-lg shadow-lg border border-gray-800 overflow-hidden mb-8">
                 <div className="flex flex-col md:flex-row p-6 md:p-8 gap-8">
-                    
                     {/* Poza Cărții */}
                     <div className="w-full md:w-1/4 flex flex-col items-center">
-                        <img 
-                            src={carte.imagine_url || carte.imagine} 
-                            alt={carte.titlu} 
-                            className="w-full max-w-[200px] aspect-[2/3] object-cover rounded shadow-xl border border-gray-700" 
-                        />
+                        <img src={carte.imagine_url || carte.imagine} alt={carte.titlu} className="w-full max-w-[200px] aspect-[2/3] object-cover rounded shadow-xl border border-gray-700" />
                     </div>
 
                     {/* Detalii Carte */}
                     <div className="w-full md:w-2/4 flex flex-col">
                         <h1 className="text-2xl font-bold text-white mb-1">{carte.titlu}</h1>
                         <p className="text-base text-gray-400 mb-4">de <span className="font-semibold text-blue-400">{carte.autor}</span></p>
-                        
-                        <StarRating 
-                            ratingMediu={carte.ratingMediu} 
-                            numarRecenzii={carte.numarRecenzii} 
-                            userRating={userRating} 
-                            onRatingSubmit={handleRating} 
-                        />
+
+                        <StarRating ratingMediu={carte.ratingMediu} numarRecenzii={carte.numarRecenzii} userRating={userRating} onRatingSubmit={handleRating} />
 
                         <hr className="my-5 border-gray-800" />
-                        
+
                         <div className="grid grid-cols-2 gap-y-2 text-sm text-gray-300 mb-6">
                             <div><span className="text-gray-500">Categorii:</span> <span className="font-medium text-gray-200">{carte.categorie || '-'}</span></div>
                             <div><span className="text-gray-500">Editura:</span> <span className="font-medium text-gray-200">{carte.editura || '-'}</span></div>
@@ -223,7 +244,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
                             <div><span className="text-gray-500">Nr. pagini:</span> <span className="font-medium text-gray-200">{carte.nrPagini || '-'}</span></div>
                             {carte.isbn && <div><span className="text-gray-500">ISBN:</span> <span className="font-medium text-gray-200">{carte.isbn}</span></div>}
                         </div>
-                        
+
                         <h3 className="text-lg font-semibold text-white mb-2">Descriere</h3>
                         <p className="text-gray-400 leading-relaxed text-sm text-justify">
                             {carte.descriere || "Descrierea nu este disponibilă momentan."}
@@ -232,24 +253,68 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
 
                     {/* Partea de Checkout */}
                     <div className="w-full md:w-1/4">
-                        <CheckoutPanel 
-                            carte={carte}
-                            isInWishlist={isWishlisted}
-                            handleAdaugaInCos={adaugaInCosGlobal}
-                            handleToggleWishlist={() => toggleWishlistGlobal(carte._id)}
-                        />
+                        <CheckoutPanel carte={carte} isInWishlist={isWishlisted} handleAdaugaInCos={adaugaInCosGlobal} handleToggleWishlist={() => toggleWishlistGlobal(carte._id)} />
                     </div>
                 </div>
             </div>
 
-            {/* Secțiunea de Recomandări refactorizată */}
-            <Recomandari 
-                titlu="Îți recomandăm și..."
-                cartiSimilare={recomandari}
-                wishlist={wishlist}
-                handleAdaugaInCos={adaugaInCosGlobal}
-                handleToggleWishlist={toggleWishlistGlobal}
-            />
+            {/* Recomandari (Mutate AICI, deasupra recenziilor) */}
+            <Recomandari titlu="Îți recomandăm și..." cartiSimilare={recomandari} categorie={carte.categorie} wishlist={wishlist} handleAdaugaInCos={adaugaInCosGlobal} handleToggleWishlist={toggleWishlistGlobal} />
+
+            {/* SECȚIUNEA DE RECENZII / COMENTARII */}
+            <div className="max-w-5xl mx-auto bg-gray-900 rounded-lg shadow-lg border border-gray-800 p-6 md:p-8 mb-12 mt-8">
+                <h2 className="text-xl font-bold text-white mb-6 border-b border-gray-800 pb-3">Recenzii și Discuții</h2>
+
+                {/* Lista de comentarii (Dacă există) */}
+                <div className="space-y-4 mb-8">
+                    {carte.comentarii && carte.comentarii.length > 0 ? (
+                        carte.comentarii.map((com, index) => (
+                            <div key={index} className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="font-semibold text-blue-400">{com.numeUtilizator}</span>
+                                    <span className="text-xs text-gray-500">
+                                        {new Date(com.data).toLocaleDateString('ro-RO', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </span>
+                                </div>
+                                <p className="text-gray-300 text-sm whitespace-pre-wrap">{com.text}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-gray-500 italic">Nu există nicio recenzie pentru această carte. Fii primul care își spune părerea!</p>
+                    )}
+                </div>
+
+                {/* Formular sau Mesaj de Autentificare */}
+                {userId ? (
+                    <form onSubmit={handleAdaugaComentariu} className="bg-gray-800 p-5 rounded-lg border border-gray-700">
+                        <h3 className="text-sm font-semibold text-white mb-3">Lasă o recenzie</h3>
+                        <textarea
+                            value={textComentariu}
+                            onChange={(e) => setTextComentariu(e.target.value)}
+                            placeholder="Scrie părerea ta despre această carte..."
+                            className="w-full bg-gray-900 text-gray-300 border border-gray-700 rounded p-3 text-sm focus:outline-none focus:border-blue-500 mb-3 min-h-[100px] resize-y"
+                            required
+                        ></textarea>
+                        <div className="flex justify-end">
+                            <button
+                                type="submit"
+                                disabled={isSubmitting || !textComentariu.trim()}
+                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded transition-colors text-sm"
+                            >
+                                {isSubmitting ? 'Se trimite...' : 'Publică Recenzia'}
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <div className="bg-gray-800/80 border border-gray-700 rounded-lg p-6 text-center flex flex-col items-center justify-center">
+                        <p className="text-gray-400 mb-4">Pentru a lăsa o recenzie, te rugăm să te autentifici în contul tău.</p>
+                        <Link to="/login" className="px-6 py-2 border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white font-medium rounded transition-colors text-sm">
+                            Intră în cont
+                        </Link>
+                    </div>
+                )}
+            </div>
+            
         </div>
     );
 }

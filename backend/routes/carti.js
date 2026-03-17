@@ -99,6 +99,46 @@ router.post('/:id/rating', async (req, res) => {
         res.status(500).json({ mesaj: 'Eroare la salvarea ratingului pe server.', eroare });
     }
 });
+router.post('/:id/comentariu', async (req, res) => {
+    try {
+        const { userId, numeUtilizator, text } = req.body;
+        const carteId = req.params.id;
+
+        // Validare de bază: Verificăm dacă avem toate datele necesare
+        if (!userId || !numeUtilizator || !text || text.trim() === '') {
+            return res.status(400).json({ mesaj: 'Te rog să completezi comentariul. Trebuie să fii autentificat.' });
+        }
+
+        // Căutăm cartea în baza de date
+        const carte = await Carte.findById(carteId);
+        if (!carte) {
+            return res.status(404).json({ mesaj: 'Cartea nu a fost găsită!' });
+        }
+
+        const comentariuNou = {
+            utilizator: userId,
+            numeUtilizator: numeUtilizator,
+            text: text.trim(),
+            data: new Date()
+        };
+
+        // Îl adăugăm în array-ul de comentarii al cărții (la început, ca să apară primul)
+        carte.comentarii.unshift(comentariuNou);
+
+        // Salvăm cartea în baza de date
+        await carte.save();
+
+        // Returnăm lista actualizată de comentarii către frontend
+        res.status(201).json({ 
+            mesaj: 'Comentariul a fost adăugat cu succes!', 
+            comentarii: carte.comentarii 
+        });
+
+    } catch (eroare) {
+        console.error("Eroare la salvarea comentariului:", eroare);
+        res.status(500).json({ mesaj: 'Eroare la salvarea comentariului pe server.', eroare });
+    }
+});
 
 //ruta delete
 router.delete('/:id', async (req, res) => {
@@ -129,5 +169,6 @@ router.put('/:id', async (req, res) => {
         res.status(500).json({ mesaj: 'Eroare la actualizarea cărții', eroare });
     }
 });
+
 
 module.exports = router;
