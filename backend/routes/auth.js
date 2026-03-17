@@ -50,7 +50,8 @@ router.post('/login', async (req, res) => {
         res.json({ 
             token, 
             rol: user.rol,
-            nume: user.nume 
+            nume: user.nume,
+            userId: user._id
         });
     } catch (eroare) {
         console.error("Eroare la login:", eroare);

@@ -34,12 +34,22 @@ function Login({ setRolUtilizator, setVizualizare, setNumeUtilizator }) {
                     parola: dateFormular.parola
                 });
                 
-                // Salvăm datele în browser (ca să ne țină minte și după refresh)
+                // Printăm în consolă răspunsul serverului ca să fim 100% siguri cum se numește ID-ul
+                console.log("Răspuns login de la server:", response.data);
+
+                // Salvăm datele în browser
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('rol', response.data.rol || 'user');
                 localStorage.setItem('nume', response.data.nume || ''); 
                 
-                // Actualizăm stările aplicației (dacă ne-au fost trimise ca props din App.jsx)
+                // SALVĂM ID-ul (folosind response.data, nu data)
+                // Punem mai multe variante în caz că backend-ul tău îl numește diferit
+                const idUtilizator = response.data.userId || response.data.id || response.data._id;
+                if (idUtilizator) {
+                    localStorage.setItem('userId', idUtilizator);
+                }
+                
+                // Actualizăm stările aplicației
                 if(setNumeUtilizator) setNumeUtilizator(response.data.nume || '');
                 if(setRolUtilizator) setRolUtilizator(response.data.rol || 'user');
 
@@ -47,13 +57,9 @@ function Login({ setRolUtilizator, setVizualizare, setNumeUtilizator }) {
                 
                 // Redirecționarea elegantă după 1 secundă
                 setTimeout(() => {
-                    // Dacă aplicația folosește stări pentru vizualizare
                     if(setVizualizare) setVizualizare('magazin');
-                    
-                    // REDIRECȚIONAREA PRINCIPALĂ (Te scoate de pe /login și te duce pe Homepage)
                     navigate('/');
                 }, 1000);
-
             } else {
                 // Cererea de înregistrare
                 await axios.post('http://localhost:5000/api/auth/register', dateFormular);

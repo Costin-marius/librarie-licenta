@@ -64,6 +64,42 @@ router.post('/seed', async (req, res) => {
     }
 });
 
+router.post('/:id/rating', async (req, res) => {
+    try {
+        const { userId, nota } = req.body;
+        const carteId = req.params.id;
+
+        // Validare de bază
+        if (!userId || !nota || nota < 1 || nota > 5) {
+            return res.status(400).json({ mesaj: 'Date invalide. Nota trebuie să fie între 1 și 5, iar utilizatorul trebuie să fie logat.' });
+        }
+
+        const carte = await Carte.findById(carteId);
+        if (!carte) {
+            return res.status(404).json({ mesaj: 'Cartea nu a fost găsită!' });
+        }
+
+        // Verificăm dacă utilizatorul a dat deja un rating acestei cărți
+        const ratingExistent = carte.ratinguri.find(r => r.utilizator.toString() === userId);
+
+        if (ratingExistent) {
+            // Dacă a dat deja, îi actualizăm nota
+            ratingExistent.nota = nota;
+        } else {
+            // Dacă nu, adăugăm un rating nou în array
+            carte.ratinguri.push({ utilizator: userId, nota: Number(nota) });
+        }
+
+        // Apelăm metoda din model care recalculează media și salvează cartea
+        await carte.calculeazaRating(); 
+
+        res.json({ mesaj: 'Rating salvat cu succes!', ratingMediu: carte.ratingMediu, numarRecenzii: carte.numarRecenzii });
+    } catch (eroare) {
+        console.error("Eroare la salvarea ratingului:", eroare);
+        res.status(500).json({ mesaj: 'Eroare la salvarea ratingului pe server.', eroare });
+    }
+});
+
 //ruta delete
 router.delete('/:id', async (req, res) => {
     try {

@@ -30,7 +30,7 @@ function BookFilters({
                 </div>
             </div>
 
-            <div className="flex space-x-4 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-hide">
+            <div className="flex space-x-4 overflow-x-auto pb-4 pt-2 -mx-2 px-2 scrollbar-hide">
                 {/* Butonul TOATE cu numarul total */}
                 <button
                     onClick={() => setCategorieSelectata('Toate')}

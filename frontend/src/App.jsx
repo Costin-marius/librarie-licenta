@@ -219,7 +219,7 @@ function App() {
                             <Login setRolUtilizator={setRolUtilizator} setVizualizare={setVizualizare} setNumeUtilizator={setNumeUtilizator} setUserId={setUserId} />
                         } />
                         <Route path="/dashboard" element={<AdminDashboard />} />
-                        <Route path="/carte/:id" element={<DetaliiCarte cos={cos} setCos={setCos} wishlist={wishlist} setWishlist={setWishlist} />} />
+                        <Route path="/carte/:id" element={<DetaliiCarte cos={cos} setCos={setCos} wishlist={wishlist} setWishlist={setWishlist} userId={userId} />} />
                         <Route path="/profil" element={<Profil inapoiLaHome={() => { setVizualizare('magazin'); window.location.href = '/'; }} />} />
                     </Routes>
                 </main>

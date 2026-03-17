@@ -35,7 +35,6 @@ const carteSchema = new mongoose.Schema({
         type: String,
         default: 'https://via.placeholder.com/150'
     },
-    // --- CÂMPURILE NOI ---
     descriere: {
         type: String,
         required: false, 
@@ -53,10 +52,35 @@ const carteSchema = new mongoose.Schema({
     nrPagini: {
         type: Number,
         required: false
+    },
+    // --- NOU: Partea pentru Rating ---
+    ratinguri: [
+        {
+            utilizator: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User', // Face legătura cu utilizatorul care a lăsat recenzia
+                required: true
+            },
+            nota: {
+                type: Number,
+                required: true,
+                min: 1,
+                max: 5
+            }
+        }
+    ],
+    ratingMediu: {
+        type: Number,
+        default: 0
+    },
+    numarRecenzii: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 
-// metode
+// --- metode ---
+
 // + verificaStoc(cantitate) : Boolean
 carteSchema.methods.verificaStoc = function(cantitateCeruta) {
     return this.stoc >= cantitateCeruta;
@@ -75,6 +99,20 @@ carteSchema.methods.scadeStoc = async function(cantitateVanduta) {
 // + getPret() : double
 carteSchema.methods.getPret = function() {
     return this.pret;
+};
+
+// --- NOU: Metodă pentru a recalcula automat media notelor ---
+carteSchema.methods.calculeazaRating = async function() {
+    if (this.ratinguri.length === 0) {
+        this.ratingMediu = 0;
+        this.numarRecenzii = 0;
+    } else {
+        const sumaNote = this.ratinguri.reduce((total, recenzie) => total + recenzie.nota, 0);
+        // Calculăm media și o rotunjim la o zecimală (ex: 4.5)
+        this.ratingMediu = parseFloat((sumaNote / this.ratinguri.length).toFixed(1));
+        this.numarRecenzii = this.ratinguri.length;
+    }
+    await this.save();
 };
 
 module.exports = mongoose.model('Carte', carteSchema);
