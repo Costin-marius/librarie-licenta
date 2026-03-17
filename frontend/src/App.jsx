@@ -48,7 +48,7 @@ function App() {
             const fetchCos = async () => {
                 try {
                     const response = await axios.get('http://localhost:5000/api/user/cos', {
-                        headers: { Authorization: `Bearer ${token}` }
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                     });
                     if (response.data) {
                         const parsedCos = response.data.map(p => ({ ...p.carte, cantitate: p.cantitate }));
@@ -131,19 +131,19 @@ function App() {
                                     BookIo
                                 </Link>
                             </div>
-                            {vizualizare === 'magazin' && !arataCos && (
-                                <div className="flex-grow max-w-2xl hidden md:block">
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            placeholder="Caută titluri, autori sau genuri..."
-                                            value={termenCautare}
-                                            onChange={(e) => setTermenCautare(e.target.value)}
-                                            className="w-full h-12 pl-12 pr-12 bg-stone-100/50 dark:bg-slate-800/50 border-none rounded-full text-sm dark:text-stone-200 focus:ring-2 focus:ring-amber-500/20 focus:bg-white dark:focus:bg-slate-800 transition-all duration-300 placeholder-stone-400 dark:placeholder-stone-500"
-                                        />
-                                        <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                        </svg>
+                           {vizualizare === 'magazin' && (
+    <div className="flex-grow max-w-2xl hidden md:block">
+        <div className="relative">
+            <input
+                type="text"
+                placeholder="Caută titluri, autori sau genuri..."
+                value={termenCautare}
+                onChange={(e) => setTermenCautare(e.target.value)}
+                className="w-full h-12 pl-12 pr-12 bg-stone-100/50 dark:bg-slate-800/50 border-none rounded-full text-sm dark:text-stone-200 focus:ring-2 focus:ring-amber-500/20 focus:bg-white dark:focus:bg-slate-800 transition-all duration-300 placeholder-stone-400 dark:placeholder-stone-500"
+            />
+            <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
                                         {termenCautare && (
                                             <button
                                                 onClick={() => setTermenCautare('')}

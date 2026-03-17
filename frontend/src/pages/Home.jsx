@@ -14,15 +14,15 @@ import ScrollToTop from '../components/ScrollToTop';
 
 function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishlist, setWishlist }) {
     const location = useLocation();
+
     // ---------------- STATE-URI ----------------
-    
     const [carti, setCarti] = useState([]);
     const [arataProfil, setArataProfil] = useState(false);
-    
+
     // Stări pentru filtre
     const [categorieSelectata, setCategorieSelectata] = useState('Toate');
     const [criteriuSortare, setCriteriuSortare] = useState('default');
-    
+
     // Stări pentru checkout
     const [metodaPlata, setMetodaPlata] = useState('ramburs');
     const [dateLivrare, setDateLivrare] = useState({ nume: '', adresa: '', telefon: '' });
@@ -55,22 +55,27 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
         const token = localStorage.getItem('token');
         if (token) {
             try {
-                await axios.post('http://localhost:5000/api/user/wishlist/toggle', { carteId }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axios.post('http://localhost:5000/api/user/wishlist/toggle', 
+                    { carteId }, 
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
             } catch (error) {
                 console.error("Eroare validare wishlist db", error);
             }
         }
+
+        const isDejaInWishlist = wishlist.includes(carteId);
+        
         setWishlist((prevWishlist) => {
-            if (prevWishlist.includes(carteId)) {
+            if (isDejaInWishlist) {
                 return prevWishlist.filter(id => id !== carteId);
             } else {
                 return [...prevWishlist, carteId];
             }
         });
-        toast[wishlist.includes(carteId) ? 'info' : 'success'](
-            wishlist.includes(carteId) ? 'Eliminată din Wishlist' : 'Adăugată în Wishlist',
+
+        toast[isDejaInWishlist ? 'info' : 'success'](
+            isDejaInWishlist ? 'Eliminată din Wishlist' : 'Adăugată în Wishlist',
             { autoClose: 2000 }
         );
     };
@@ -79,19 +84,22 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
         const token = localStorage.getItem('token');
         if (token) {
             try {
-                await axios.post('http://localhost:5000/api/user/cos/adauga', { carteId: carte._id, cantitate: 1 }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axios.post('http://localhost:5000/api/user/cos/adauga', 
+                    { carteId: carte._id, cantitate: 1 }, 
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
             } catch (error) {
                 console.error("Eroare adaugare cos db", error);
             }
         }
+
         const existaInCos = cos.find(item => item._id === carte._id);
         if (existaInCos) {
             setCos(cos.map(item => item._id === carte._id ? { ...item, cantitate: item.cantitate + 1 } : item));
         } else {
             setCos([...cos, { ...carte, cantitate: 1 }]);
         }
+        
         toast.success(`"${carte.titlu}" a fost adăugată în coș!`, { autoClose: 2000 });
     };
 
@@ -100,18 +108,21 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
         if (token) {
             try {
                 if (delta > 0) {
-                    await axios.post('http://localhost:5000/api/user/cos/adauga', { carteId: id, cantitate: delta }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    await axios.post('http://localhost:5000/api/user/cos/adauga', 
+                        { carteId: id, cantitate: delta }, 
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
                 } else {
-                    await axios.post('http://localhost:5000/api/user/cos/sterge', { carteId: id, stergeDeTot: false }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    await axios.post('http://localhost:5000/api/user/cos/sterge', 
+                        { carteId: id, stergeDeTot: false }, 
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
                 }
             } catch (error) {
                 console.error("Eroare modificare cantitate db", error);
             }
         }
+
         setCos(cos.map(item => {
             if (item._id === id) {
                 const nouaCantitate = item.cantitate + delta;
@@ -125,20 +136,26 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
         const token = localStorage.getItem('token');
         if (token) {
             try {
-                await axios.post('http://localhost:5000/api/user/cos/sterge', { carteId: id, stergeDeTot: true }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axios.post('http://localhost:5000/api/user/cos/sterge', 
+                    { carteId: id, stergeDeTot: true }, 
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
             } catch (error) {
                 console.error("Eroare stergere cos db", error);
             }
         }
+        
         setCos(cos.filter(item => item._id !== id));
         toast.error('Produs eliminat din coș.');
     };
 
     const plaseazaComanda = async (e) => {
         e.preventDefault();
-        if (!userId && !localStorage.getItem('rol')) {
+        
+        const idUtilizator = userId || localStorage.getItem('userId');
+        const token = localStorage.getItem('token');
+
+        if (!idUtilizator && !localStorage.getItem('rol')) {
             toast.error("Trebuie să fii autentificat pentru a plasa o comandă!");
             setTimeout(() => {
                 window.location.href = '/login';
@@ -147,6 +164,7 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
         }
 
         const dateComanda = {
+            userId: idUtilizator,
             dateLivrare,
             metodaPlata,
             total: Number(totalCos.toFixed(2)),
@@ -161,17 +179,33 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
         try {
             await axios.post('http://localhost:5000/api/comenzi', dateComanda);
             toast.success(`Comanda plasată cu succes!`);
+
+            // Golește coșul din Baza de Date (backend) dacă userul este logat
+            if (token) {
+                try {
+                    await axios.delete('http://localhost:5000/api/user/cos/goleste', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                } catch (err) {
+                    console.error("Nu am putut goli coșul din baza de date", err);
+                }
+            }
+
+            // Resetăm stările după o comandă reușită (frontend)
             setCos([]);
             setDateLivrare({ nume: '', adresa: '', telefon: '' });
             setDateCard({ numar: '', expirare: '', cvv: '' });
             setArataCos(false);
+
+            // Reîncărcăm cărțile pentru a updata stocurile
             fetchCarti();
         } catch (error) {
-            toast.error("Eroare la plasarea comenzii.");
+            console.error(error);
+            toast.error("Eroare la plasarea comenzii. Verifică datele introduse!");
         }
     };
 
-    // ---------------- VARIABILE UTILE ----------------
+    // ---------------- VARIABILE UTILE & FILTRARE ----------------
     const totalCos = cos.reduce((total, item) => total + (item.pret * item.cantitate), 0);
     const categoriiDisponibile = ['Toate', ...new Set(carti.map(c => c.categorie).filter(cat => cat && cat.trim() !== ''))];
     
@@ -191,7 +225,7 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
     return (
         <div className="flex-1 w-full bg-ivory dark:bg-slate-900 transition-colors duration-300 font-sans overflow-x-hidden relative">
             <ToastContainer position="bottom-right" autoClose={3000} theme="dark" />
-
+            
             <div className="w-full">
                 {arataProfil ? (
                     <div className="pt-8 px-6 md:px-12 max-w-7xl mx-auto min-h-screen">
@@ -200,9 +234,9 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
                 ) : (
                     <div className="pt-8 px-6 md:px-12 max-w-7xl mx-auto min-h-screen">
                         
-                        {/* CATEGORIES & FILTERS */}
+                        {/* FILTRE */}
                         {!arataCos && (
-                            <BookFilters 
+                            <BookFilters
                                 criteriuSortare={criteriuSortare}
                                 setCriteriuSortare={setCriteriuSortare}
                                 categorieSelectata={categorieSelectata}
@@ -214,7 +248,7 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
 
                         {/* CHECKOUT SAU GRILA DE CARTI */}
                         {arataCos ? (
-                            <CheckoutCart 
+                            <CheckoutCart
                                 cos={cos}
                                 totalCos={totalCos}
                                 setArataCos={setArataCos}
@@ -231,26 +265,31 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
                         ) : (
                             <>
                                 <div className="mb-4 text-stone-500 dark:text-stone-400 font-medium text-sm flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
                                     Afișăm {cartiProcesate.length} {cartiProcesate.length === 1 ? 'produs' : 'produse'} în categoria "{categorieSelectata}"
                                 </div>
-
+                                
                                 {cartiProcesate.length === 0 ? (
                                     <div className="text-center py-16">
                                         <p className="text-2xl text-stone-500 dark:text-stone-400 mb-2">😕 Nu am găsit nicio carte care să corespundă criteriilor.</p>
-                                        <button onClick={() => { /* Opțional: setează termenul de căutare din App.jsx pe gol aici dacă pasezi prop-ul de setare */ setCategorieSelectata('Toate');}} className="mt-4 text-amber-600 hover:text-amber-700 underline font-medium">
+                                        <button
+                                            onClick={() => setCategorieSelectata('Toate')}
+                                            className="mt-4 text-amber-600 hover:text-amber-700 underline font-medium"
+                                        >
                                             Resetează filtrele
                                         </button>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-4" data-purpose="product-grid">
                                         {cartiProcesate.map((carte) => (
-                                            <BookCard 
-                                                key={carte._id} 
-                                                carte={carte} 
-                                                adaugaInCos={adaugaInCos} 
-                                                toggleWishlist={toggleWishlist} 
-                                                wishlist={wishlist} 
+                                            <BookCard
+                                                key={carte._id}
+                                                carte={carte}
+                                                adaugaInCos={adaugaInCos}
+                                                toggleWishlist={toggleWishlist}
+                                                wishlist={wishlist}
                                             />
                                         ))}
                                     </div>
@@ -260,7 +299,6 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
                     </div>
                 )}
             </div>
-
             <Footer />
             <ScrollToTop />
         </div>

@@ -17,7 +17,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
     const [recomandari, setRecomandari] = useState([]);
     const [userRating, setUserRating] = useState(0);
 
-    // 1. Efectul principal: aduce cartea curentă și verifică ratingul utilizatorului
+    // 1. Efectul principal
     useEffect(() => {
         window.scrollTo(0, 0);
         setLoading(true);
@@ -30,7 +30,6 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
                 setCarte(data);
                 setLoading(false);
                 
-                // Verificăm dacă utilizatorul a votat deja cartea
                 if (userId && data.ratinguri) {
                     const ratingExistent = data.ratinguri.find(r => r.utilizator === userId);
                     if (ratingExistent) {
@@ -46,7 +45,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
             });
     }, [id, userId]);
 
-    // 2. Efectul secundar: aduce recomandările pe baza categoriei
+    // 2. Efectul secundar
     useEffect(() => {
         if (carte && carte.categorie) {
             fetch('http://localhost:5000/api/carti')
@@ -63,7 +62,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
 
     const isWishlisted = wishlist?.includes(carte?._id);
 
-    // 3. Funcție generală de adăugare în coș
+    // 3. Funcție adăugare în coș
     const adaugaInCosGlobal = async (carteToAdd) => {
         if (!carteToAdd) return;
         
@@ -95,7 +94,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
         }
     };
 
-    // 4. Funcție generală pentru Wishlist
+    // 4. Funcție Wishlist
     const toggleWishlistGlobal = async (carteId) => {
         if (!carteId) return;
         const token = localStorage.getItem('token');
@@ -137,7 +136,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
         }
     };
 
-    // 5. Funcția de trimitere a ratingului
+    // 5. Funcție Rating
     const handleRating = async (nota) => {
         let idUtilizator = userId || localStorage.getItem('userId');
 
@@ -171,9 +170,8 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
         }
     };
 
-    // Render-uri condiționate pentru loading și eroare
-    if (loading) return <div className="min-h-screen bg-gray-950 text-gray-300 flex justify-center items-center text-xl">Se încarcă detaliile... ⏳</div>;
-    if (!carte) return <div className="min-h-screen bg-gray-950 text-red-400 flex justify-center items-center text-xl font-bold">Cartea nu a fost găsită în sistem! 😕</div>;
+    if (loading) return <div className="min-h-screen bg-gray-950 text-gray-300 flex justify-center items-center text-lg">Se încarcă detaliile... ⏳</div>;
+    if (!carte) return <div className="min-h-screen bg-gray-950 text-red-400 flex justify-center items-center text-lg font-bold">Cartea nu a fost găsită în sistem! 😕</div>;
 
     // --- RENDER PRINCIPAL ---
     return (
@@ -181,34 +179,33 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
             <ToastContainer position="bottom-right" autoClose={3000} theme="dark" />
             
             {/* Breadcrumbs */}
-            <div className="max-w-6xl mx-auto mb-6 flex items-center gap-2 text-sm text-gray-500 font-medium">
+            <div className="max-w-5xl mx-auto mb-6 flex items-center gap-2 text-sm text-gray-500 font-medium">
                 <Link to="/" className="hover:text-blue-400 transition flex items-center gap-1">
                     <span>←</span> Înapoi la Produse
                 </Link>
                 <span>/</span>
                 <span className="text-gray-500">{carte.categorie || 'Fără categorie'}</span>
                 <span>/</span>
-                <span className="text-gray-300 font-bold">{carte.titlu}</span>
+                <span className="text-gray-300 font-semibold">{carte.titlu}</span>
             </div>
 
-            <div className="max-w-6xl mx-auto bg-gray-900 rounded-xl shadow-lg border border-gray-800 overflow-hidden mb-16">
-                <div className="flex flex-col md:flex-row p-6 md:p-10 gap-10">
+            <div className="max-w-5xl mx-auto bg-gray-900 rounded-lg shadow-lg border border-gray-800 overflow-hidden mb-12">
+                <div className="flex flex-col md:flex-row p-6 md:p-8 gap-8">
                     
                     {/* Poza Cărții */}
                     <div className="w-full md:w-1/4 flex flex-col items-center">
                         <img 
                             src={carte.imagine_url || carte.imagine} 
                             alt={carte.titlu} 
-                            className="w-full max-w-[250px] aspect-[2/3] object-cover rounded-md shadow-2xl border border-gray-700" 
+                            className="w-full max-w-[200px] aspect-[2/3] object-cover rounded shadow-xl border border-gray-700" 
                         />
                     </div>
 
                     {/* Detalii Carte */}
                     <div className="w-full md:w-2/4 flex flex-col">
-                        <h1 className="text-3xl font-extrabold text-white mb-1">{carte.titlu}</h1>
-                        <p className="text-lg text-gray-400 mb-4">de <span className="font-semibold text-blue-400">{carte.autor}</span></p>
+                        <h1 className="text-2xl font-bold text-white mb-1">{carte.titlu}</h1>
+                        <p className="text-base text-gray-400 mb-4">de <span className="font-semibold text-blue-400">{carte.autor}</span></p>
                         
-                        {/* Aici chemăm componenta de steluțe */}
                         <StarRating 
                             ratingMediu={carte.ratingMediu} 
                             numarRecenzii={carte.numarRecenzii} 
@@ -216,9 +213,9 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
                             onRatingSubmit={handleRating} 
                         />
 
-                        <hr className="mb-6 border-gray-800" />
+                        <hr className="my-5 border-gray-800" />
                         
-                        <div className="grid grid-cols-2 gap-y-3 text-sm text-gray-300 mb-8">
+                        <div className="grid grid-cols-2 gap-y-2 text-sm text-gray-300 mb-6">
                             <div><span className="text-gray-500">Categorii:</span> <span className="font-medium text-gray-200">{carte.categorie || '-'}</span></div>
                             <div><span className="text-gray-500">Editura:</span> <span className="font-medium text-gray-200">{carte.editura || '-'}</span></div>
                             <div><span className="text-gray-500">Limba:</span> <span className="font-medium text-gray-200">{carte.limba || 'Română'}</span></div>
@@ -227,13 +224,13 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
                             {carte.isbn && <div><span className="text-gray-500">ISBN:</span> <span className="font-medium text-gray-200">{carte.isbn}</span></div>}
                         </div>
                         
-                        <h3 className="text-xl font-bold text-white mb-3">Descriere</h3>
-                        <p className="text-gray-400 leading-relaxed text-sm md:text-base text-justify">
+                        <h3 className="text-lg font-semibold text-white mb-2">Descriere</h3>
+                        <p className="text-gray-400 leading-relaxed text-sm text-justify">
                             {carte.descriere || "Descrierea nu este disponibilă momentan."}
                         </p>
                     </div>
 
-                    {/* Partea de Checkout refactorizată */}
+                    {/* Partea de Checkout */}
                     <div className="w-full md:w-1/4">
                         <CheckoutPanel 
                             carte={carte}
@@ -247,6 +244,7 @@ function DetaliiCarte({ cos, setCos, wishlist, setWishlist, userId }) {
 
             {/* Secțiunea de Recomandări refactorizată */}
             <Recomandari 
+                titlu="Îți recomandăm și..."
                 cartiSimilare={recomandari}
                 wishlist={wishlist}
                 handleAdaugaInCos={adaugaInCosGlobal}

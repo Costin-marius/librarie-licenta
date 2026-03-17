@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 
 function BookCard({ carte, adaugaInCos, toggleWishlist, wishlist }) {
+    // Ne asigurăm că wishlist este mereu un array pentru a evita erorile
+    const isWishlisted = (wishlist || []).includes(carte._id);
+
     return (
         <div className="group relative bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-[0_20px_25px_-5px_rgba(0,0,0,0.05),0_10px_10px_-5px_rgba(0,0,0,0.02)] dark:shadow-none dark:border dark:border-slate-700/50 transition-all duration-500" data-purpose="book-card">
             <div className="relative mb-4 group/image overflow-hidden rounded-xl">
@@ -36,10 +39,10 @@ function BookCard({ carte, adaugaInCos, toggleWishlist, wishlist }) {
                     {/* Buton Wishlist */}
                     <button 
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(carte._id); }} 
-                        className={`p-3 rounded-full shadow-lg transition-transform hover:scale-110 ${wishlist.includes(carte._id) ? 'bg-white text-red-500' : 'bg-white/90 text-stone-600 hover:text-red-500 hover:bg-white'}`} 
-                        title={wishlist.includes(carte._id) ? "Elimină din wishlist" : "Adaugă în wishlist"}
+                        className={`p-3 rounded-full shadow-lg transition-transform hover:scale-110 ${isWishlisted ? 'bg-white text-red-500' : 'bg-white/90 text-stone-600 hover:text-red-500 hover:bg-white'}`} 
+                        title={isWishlisted ? "Elimină din wishlist" : "Adaugă în wishlist"}
                     >
-                        <svg className="w-6 h-6" fill={wishlist.includes(carte._id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6" fill={isWishlisted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                         </svg>
                     </button>
@@ -48,7 +51,7 @@ function BookCard({ carte, adaugaInCos, toggleWishlist, wishlist }) {
                     {carte.stoc > 0 ? (
                         <button 
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); adaugaInCos(carte); }} 
-                            className="p-3 rounded-full bg-amber-500 text-white shadow-lg transition-transform hover:scale-110 hover:bg-amber-400" 
+                            className="p-3 rounded-full bg-amber-500 text-white shadow-lg transition-transform hover:scale-110 hover:bg-amber-600" 
                             title="Adaugă în coș"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,8 +77,8 @@ function BookCard({ carte, adaugaInCos, toggleWishlist, wishlist }) {
                 </Link>
                 <p className="text-sm text-stone-500 dark:text-stone-400 mt-2 line-clamp-1">Editura: {carte.editura}</p>
                 <div className="mt-4 pt-3 flex items-center justify-center w-full">
-                    <span className="text-2xl font-black text-amber-600 dark:text-amber-500">
-                        {carte.pret} <span className="text-base font-bold opacity-80">RON</span>
+                    <span className="text-2xl font-black text-amber-500">
+                        {carte.pret} <span className="text-base font-bold">lei</span>
                     </span>
                 </div>
             </div>

@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const router = express.Router();
+const Comanda = require('../models/Comanda');
 
 // Middleware pentru a verifica dacă utilizatorul este logat (are token valid)
 const verificaToken = (req, res, next) => {
@@ -49,6 +50,17 @@ router.get('/cos', verificaToken, async (req, res) => {
         res.json(user.cos);
     } catch (eroare) {
         res.status(500).json({ mesaj: 'Eroare server cos' });
+    }
+});
+
+router.get('/comenzi', verificaToken, async (req, res) => {
+    try {
+        // req.userId vine direct din token (deci e imposibil de falsificat)
+        const comenzi = await Comanda.find({ utilizator: req.userId }).sort({ createdAt: -1 });
+        res.json(comenzi);
+    } catch (eroare) {
+        console.error("Eroare la extragerea comenzilor:", eroare);
+        res.status(500).json({ mesaj: 'Eroare la aducerea istoricului de comenzi.' });
     }
 });
 
@@ -170,4 +182,20 @@ router.post('/cos/sterge', verificaToken, async (req, res) => {
     }
 });
 
+router.delete('/cos/goleste', verificaToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        
+        if (!user) {
+            return res.status(404).json({ mesaj: 'Utilizatorul nu a fost găsit.' });
+        }
+        user.cos = [];
+        await user.save();
+
+        res.status(200).json({ mesaj: 'Coșul a fost golit cu succes!', cos: user.cos });
+    } catch (eroare) {
+        console.error("Eroare la golirea coșului:", eroare);
+        res.status(500).json({ mesaj: 'Eroare la golirea coșului.' });
+    }
+});
 module.exports = router;

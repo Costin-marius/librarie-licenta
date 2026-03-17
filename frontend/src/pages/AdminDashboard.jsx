@@ -92,7 +92,7 @@ function AdminDashboard() {
             <ToastContainer position="top-right" autoClose={3000} theme="dark" />
 
             {/* SIDEBAR */}
-            <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col hidden md:flex">
+            <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col hidden md:flex">
                 <div className="p-6 border-b border-gray-800">
                     <h2 className="text-2xl font-black text-blue-400">AdminPanel</h2>
                     <p className="text-xs text-gray-500 mt-1"> Gestiune </p>
@@ -117,7 +117,7 @@ function AdminDashboard() {
             {/* MAIN CONTENT */}
             <main className="flex-1 flex flex-col overflow-hidden">
                 {/* TOP HEADER */}
-                <header className="h-20 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-8">
+                <header className="h-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-8">
                     <div className="relative w-96">
                         <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">🔍</span>
                         <input 
@@ -136,10 +136,10 @@ function AdminDashboard() {
 
                 {/* AREA TABEL */}
                 <div className="flex-1 overflow-auto p-8">
-                    <div className="bg-gray-900 rounded-xl border border-gray-800 shadow-xl overflow-hidden">
+                    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-800 shadow-xl overflow-hidden">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-gray-800 text-gray-400 text-sm uppercase tracking-wider border-b border-gray-700">
+                                <tr className="bg-gray-50 dark:bg-gray-800 text-gray-400 text-sm uppercase tracking-wider border-b border-gray-700">
                                     <th className="px-6 py-4 font-medium">Copertă</th>
                                     <th className="px-6 py-4 font-medium">Detalii Carte</th>
                                     <th className="px-6 py-4 font-medium">Preț</th>
@@ -161,7 +161,7 @@ function AdminDashboard() {
                                                 <img src={carte.imagine_url} alt="coperta" className="w-12 h-16 object-cover rounded shadow border border-gray-700" />
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="font-bold text-gray-200">{carte.titlu}</div>
+                                                <div className="font-bold text-gray-900 dark:text-gray-200">{carte.titlu}</div>
                                                 <div className="text-sm text-gray-400">{carte.autor} • <span className="text-gray-500 text-xs">ISBN: {carte.isbn}</span></div>
                                             </td>
                                             <td className="px-6 py-4 font-semibold text-blue-400">
