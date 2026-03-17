@@ -3,7 +3,7 @@ import axios from 'axios';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
-import DetaliiCarte from './DetaliiCarte';
+import DetaliiCarte from './pages/DetaliiCarte';
 import Profil from './pages/Profil';
 import WishlistDrawer from './components/WishlistDrawer';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
