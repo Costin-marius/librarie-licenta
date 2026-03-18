@@ -47,4 +47,32 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.patch('/:id/status', async (req, res) => {
+    try {
+        const { stare } = req.body;
+        const comandaId = req.params.id;
+
+        const stariPermise = ['Plasată', 'În procesare', 'Expediată', 'Livrată', 'Anulată'];
+        if (!stariPermise.includes(stare)) {
+             return res.status(400).json({ mesaj: 'Status invalid!' });
+        }
+
+        const comandaActualizata = await Comanda.findByIdAndUpdate(
+            comandaId,
+            { stare: stare },
+            { new: true } 
+        );
+
+        if (!comandaActualizata) {
+            return res.status(404).json({ mesaj: 'Comanda nu a fost găsită!' });
+        }
+
+        res.json({ mesaj: 'Status actualizat cu succes', comanda: comandaActualizata });
+
+    } catch (eroare) {
+        console.error("Eroare la actualizarea statusului:", eroare);
+        res.status(500).json({ mesaj: 'Eroare la actualizarea statusului' });
+    }
+});
+
 module.exports = router;

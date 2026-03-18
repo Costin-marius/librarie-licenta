@@ -68,10 +68,20 @@ function AppContent() {
                     const response = await axios.get('http://localhost:5000/api/user/cos', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                     });
-                    if (response.data) {
-                        const parsedCos = response.data.map(p => ({ ...p.carte, cantitate: p.cantitate }));
+                    
+                    // --- AICI ESTE MODIFICAREA ---
+                    // Verificăm dacă backend-ul a trimis obiectul cu proprietatea 'produse'
+                    if (response.data && response.data.produse) {
+                        const parsedCos = response.data.produse
+                            .filter(p => p.carteId !== null) // Măsură extra de siguranță
+                            .map(p => ({ 
+                                ...p.carteId,           // Luăm toate detaliile cărții (titlu, pret, imagine)
+                                cantitate: p.cantitate, // Adăugăm cantitatea
+                                _id: p.carteId._id      // Ne asigurăm că ID-ul produsului este setat corect
+                            }));
                         setCos(parsedCos);
                     }
+                    // -----------------------------
                 } catch (error) {
                     console.error("Eroare la aducerea coșului din baza de date:", error);
                 }

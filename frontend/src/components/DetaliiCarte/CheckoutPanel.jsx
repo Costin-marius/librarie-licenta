@@ -2,29 +2,29 @@ import React from 'react';
 
 function CheckoutPanel({ carte, isInWishlist, handleAdaugaInCos, handleToggleWishlist }) {
     return (
-        <div className="bg-[#1a1f2b] md:bg-gray-800/40 rounded-xl p-6 flex flex-col border border-gray-700/50 shadow-sm h-full">
+        <div className="bg-gray-50 dark:bg-[#1a1f2b] md:dark:bg-gray-800/40 rounded-xl p-6 flex flex-col border border-gray-200 dark:border-gray-700/50 shadow-sm h-full transition-colors duration-300">
             
             {/* Preț */}
-            <div className="text-3xl font-bold text-white mb-3">
+            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3 transition-colors">
                 {carte.pret} lei
             </div>
 
             {localStorage.getItem('rol') === 'admin' ? (
-                <div className="text-blue-400 font-semibold text-sm mb-6">
+                <div className="text-blue-600 dark:text-blue-400 font-semibold text-sm mb-6 transition-colors">
                     🛠️ Stoc intern (Admin): {carte.stoc} buc.
                 </div>
             ) : (
                 <div className="text-sm mb-6">
                     {carte.stoc > 10 && (
-                        <span className="text-green-500 font-semibold">✓ În stoc</span>
+                        <span className="text-green-600 dark:text-green-500 font-semibold transition-colors">✓ În stoc</span>
                     )}
                     {carte.stoc > 0 && carte.stoc <= 10 && (
-                        <span className="text-orange-500 font-semibold">
+                        <span className="text-orange-600 dark:text-orange-500 font-semibold transition-colors">
                             🔥 Ultimele {carte.stoc} bucăți!
                         </span>
                     )}
                     {carte.stoc === 0 && (
-                        <span className="text-red-500 font-semibold">Stoc epuizat</span>
+                        <span className="text-red-600 dark:text-red-500 font-semibold transition-colors">Stoc epuizat</span>
                     )}
                 </div>
             )}
@@ -40,7 +40,7 @@ function CheckoutPanel({ carte, isInWishlist, handleAdaugaInCos, handleToggleWis
             {/* Buton Wishlist */}
             <button
                 onClick={handleToggleWishlist}
-                className="w-full py-2.5 bg-transparent border border-gray-600 hover:border-gray-500 hover:bg-gray-800/50 text-gray-300 text-sm font-medium rounded transition-all flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-800 dark:text-gray-300 text-sm font-medium rounded transition-all flex items-center justify-center gap-2"
             >
                 {isInWishlist ? (
                     <>
@@ -48,19 +48,19 @@ function CheckoutPanel({ carte, isInWishlist, handleAdaugaInCos, handleToggleWis
                     </>
                 ) : (
                     <>
-                        <span className="text-gray-400 text-lg leading-none">🤍</span> Adaugă în wishlist
+                        <span className="text-gray-500 dark:text-gray-400 text-lg leading-none">🤍</span> Adaugă în wishlist
                     </>
                 )}
             </button>
 
             {/* Informații Livrare & Retur */}
-            <div className="mt-auto pt-6 flex flex-col gap-3 text-xs text-gray-400">
+            <div className="mt-auto pt-6 flex flex-col gap-3 text-xs text-gray-600 dark:text-gray-400 transition-colors">
                 <div className="flex items-center gap-2">
-                    <span className="text-orange-400 text-base">🚚</span>
+                    <span className="text-orange-500 dark:text-orange-400 text-base">🚚</span>
                     <p>Livrare gratuită la comenzi peste 150 lei.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-orange-400 text-base">📦</span>
+                    <span className="text-orange-500 dark:text-orange-400 text-base">📦</span>
                     <p>Retur gratuit în 14 zile.</p>
                 </div>
             </div>

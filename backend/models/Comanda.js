@@ -22,7 +22,7 @@ const ComandaSchema = new mongoose.Schema({
     
     stare: { 
         type: String, 
-        enum: ['Plasată', 'În procesare', 'Expediată', 'Livrată'], // Doar aceste valori sunt acceptate
+        enum: ['Plasată', 'În procesare', 'Expediată', 'Livrată', 'Anulată'], // Doar aceste valori sunt acceptate
         default: 'Plasată' 
     }
 }, { timestamps: true });

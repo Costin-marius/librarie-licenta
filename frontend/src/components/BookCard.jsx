@@ -71,8 +71,8 @@ function BookCard({ carte, adaugaInCos, toggleWishlist, wishlist }) {
             <div className="mt-8 transition-colors duration-300 flex flex-col items-center h-full text-center">
                 <p className="text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 font-semibold mb-1">{carte.autor}</p>
                 <Link to={`/carte/${carte._id}`}>
-                    <h3 className="text-xl font-serif font-bold text-anthracite dark:text-stone-100 line-clamp-1 hover:text-amber-500 transition-colors">
-                        {carte.titlu}
+                    <h3 className="text-xl font-serif font-bold text-anthracite dark:text-stone-100 line-clamp-2 hover:text-amber-500 transition-colors min-h-[56px]">
+                      {carte.titlu}
                     </h3>
                 </Link>
                 <p className="text-sm text-stone-500 dark:text-stone-400 mt-2 line-clamp-1">Editura: {carte.editura}</p>
