@@ -39,8 +39,9 @@ cron.schedule('*/2 * * * *', async () => {
         const fluxStari = ['Plasată', 'În procesare', 'Expediată', 'Livrată'];
 
         // Luăm din baza de date doar comenzile care încă sunt pe drum (sau abia plasate)
-        const comenziActive = await Comanda.find({ stare: { $ne: 'Livrată' } });
-
+const comenziActive = await Comanda.find({ 
+    stare: { $nin: ['Livrată', 'Anulată'] } 
+});
         if (comenziActive.length > 0) {
             console.log(`--- Verific stările pentru ${comenziActive.length} comenzi active ---`);
         }

@@ -38,6 +38,7 @@ router.post('/', async (req, res) => {
     }
 });
 
+// 2. Rută pentru obținerea tuturor comenzilor (Admin)
 router.get('/', async (req, res) => {
     try {
         const comenzi = await Comanda.find().sort({ createdAt: -1 });
@@ -47,6 +48,7 @@ router.get('/', async (req, res) => {
     }
 });
 
+// 3. Rută pentru actualizarea statusului (inclusiv "Anulată")
 router.patch('/:id/status', async (req, res) => {
     try {
         const { stare } = req.body;
@@ -57,21 +59,53 @@ router.patch('/:id/status', async (req, res) => {
              return res.status(400).json({ mesaj: 'Status invalid!' });
         }
 
-        const comandaActualizata = await Comanda.findByIdAndUpdate(
-            comandaId,
-            { stare: stare },
-            { new: true } 
-        );
-
-        if (!comandaActualizata) {
+        const comandaVeche = await Comanda.findById(comandaId);
+        if (!comandaVeche) {
             return res.status(404).json({ mesaj: 'Comanda nu a fost găsită!' });
         }
+
+        if (stare === 'Anulată' && comandaVeche.stare !== 'Anulată') {
+            for (let item of comandaVeche.produse) {
+                await Carte.findByIdAndUpdate(item.carteId, {
+                    $inc: { stoc: item.cantitate } // Aici dăm + la stoc
+                });
+            }
+        } 
+        else if (comandaVeche.stare === 'Anulată' && stare !== 'Anulată') {
+             for (let item of comandaVeche.produse) {
+                await Carte.findByIdAndUpdate(item.carteId, {
+                    $inc: { stoc: -item.cantitate } // Scădem stocul la loc
+                });
+            }
+        }
+
+        // 3. Abia acum actualizăm comanda cu noul status
+        comandaVeche.stare = stare;
+        const comandaActualizata = await comandaVeche.save();
 
         res.json({ mesaj: 'Status actualizat cu succes', comanda: comandaActualizata });
 
     } catch (eroare) {
         console.error("Eroare la actualizarea statusului:", eroare);
         res.status(500).json({ mesaj: 'Eroare la actualizarea statusului' });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const comandaId = req.params.id;
+        
+        // Căutăm și ștergem comanda după ID
+        const comandaStearsa = await Comanda.findByIdAndDelete(comandaId);
+
+        if (!comandaStearsa) {
+            return res.status(404).json({ mesaj: 'Comanda nu a fost găsită pentru a fi ștearsă.' });
+        }
+
+        res.status(200).json({ mesaj: 'Comanda a fost ștearsă cu succes!' });
+    } catch (eroare) {
+        console.error("Eroare la ștergerea comenzii:", eroare);
+        res.status(500).json({ mesaj: 'Eroare pe server la ștergerea comenzii.' });
     }
 });
 

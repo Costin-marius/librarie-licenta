@@ -133,7 +133,7 @@ function AdminDashboard() {
 
     return (
         <div className="flex h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-200 font-sans overflow-hidden transition-colors duration-300">
-            <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+            <ToastContainer position="bottom-right" autoClose={3000} theme="dark" />
 
             {/* SIDEBAR */}
             <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex-col hidden md:flex transition-colors duration-300">
