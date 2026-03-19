@@ -54,7 +54,6 @@ const carteSchema = new mongoose.Schema({
         required: false
     },
     
-    // --- 1. RATINGUL TĂU ORIGINAL (Doar steluțe, 1-5) ---
     ratinguri: [
         {
             utilizator: {
@@ -79,7 +78,13 @@ const carteSchema = new mongoose.Schema({
         default: 0
     },
 
-    // --- 2. NOU: PARTEA PENTRU DISCUȚII / COMENTARII TEXT ---
+    voturiGenerate: {
+        type: Number
+    },
+    medieGenerata: {
+        type: Number
+    },
+
     comentarii: [
         {
             utilizator: {
@@ -103,7 +108,6 @@ const carteSchema = new mongoose.Schema({
     ]
 }, { timestamps: true });
 
-// --- metode ---
 
 carteSchema.methods.verificaStoc = function(cantitateCeruta) {
     return this.stoc >= cantitateCeruta;
@@ -122,16 +126,27 @@ carteSchema.methods.getPret = function() {
     return this.pret;
 };
 
-// --- Metoda ta originală pentru calculul steluțelor ---
 carteSchema.methods.calculeazaRating = async function() {
-    if (this.ratinguri.length === 0) {
-        this.ratingMediu = 0;
-        this.numarRecenzii = 0;
-    } else {
-        const sumaNote = this.ratinguri.reduce((total, rating) => total + rating.nota, 0);
-        this.ratingMediu = parseFloat((sumaNote / this.ratinguri.length).toFixed(1));
-        this.numarRecenzii = this.ratinguri.length;
+    if (this.voturiGenerate === undefined) {
+        this.voturiGenerate = this.numarRecenzii; 
+        this.medieGenerata = this.ratingMediu;
     }
+
+    let sumaReale = 0;
+    if (this.ratinguri.length > 0) {
+        sumaReale = this.ratinguri.reduce((total, rating) => total + rating.nota, 0);
+    }
+
+    const sumaFalse = (this.voturiGenerate * this.medieGenerata) || 0;
+
+    this.numarRecenzii = this.voturiGenerate + this.ratinguri.length;
+
+    if (this.numarRecenzii === 0) {
+        this.ratingMediu = 0;
+    } else {
+        this.ratingMediu = parseFloat(((sumaFalse + sumaReale) / this.numarRecenzii).toFixed(1));
+    }
+
     await this.save();
 };
 

@@ -128,7 +128,7 @@ function Login({ setRolUtilizator, setVizualizare, setNumeUtilizator }) {
                 <div className="text-center mb-10">
                     <h1 className="text-4xl font-black text-blue-400 mb-2 tracking-tight">📚 BookIo</h1>
                     <p className="text-gray-400">
-                        {isLogin ? 'Bine ai revenit în librărie!' : 'Creează un cont nou de cititor.'}
+                        {isLogin ? 'Bine ai revenit!' : 'Creează un cont nou de cititor.'}
                     </p>
                 </div>
 
