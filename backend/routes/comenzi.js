@@ -37,7 +37,47 @@ router.post('/', async (req, res) => {
         res.status(500).json({ mesaj: 'Eroare la plasarea comenzii', eroare });
     }
 });
+router.get('/statistici/vanzari', async (req, res) => {
+    try {
+        // Calculăm data de acum 7 zile
+        const sapteZileInUrma = new Date();
+        sapteZileInUrma.setDate(sapteZileInUrma.getDate() - 7);
 
+        // Facem agregarea în baza de date
+        const statistici = await Comanda.aggregate([
+            {
+                // Luăm doar comenzile mai noi de acum 7 zile
+                $match: {
+                    createdAt: { $gte: sapteZileInUrma }
+                }
+            },
+            {
+                // Grupăm pe zile și adunăm banii / numărul de comenzi
+                $group: {
+                    _id: { $dateToString: { format: "%d-%m-%Y", date: "$createdAt" } }, // Formatăm ca Zi-Luna-An
+                    incasari: { $sum: "$total" },
+                    comenzi: { $sum: 1 }
+                }
+            },
+            {
+                // Sortăm crescător
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Redenumim _id în "data" pentru a fi mai ușor de citit în Frontend
+        const dateFormatate = statistici.map(stat => ({
+            data: stat._id,
+            incasari: stat.incasari,
+            comenzi: stat.comenzi
+        }));
+
+        res.status(200).json(dateFormatate);
+    } catch (error) {
+        console.error("Eroare la statistici:", error);
+        res.status(500).json({ mesaj: "Eroare la aducerea statisticilor pentru grafic." });
+    }
+});
 // 2. Rută pentru obținerea tuturor comenzilor (Admin)
 router.get('/', async (req, res) => {
     try {
@@ -48,7 +88,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// 3. Rută pentru actualizarea statusului (inclusiv "Anulată")
+// 3. Rută pentru actualizarea statusului
 router.patch('/:id/status', async (req, res) => {
     try {
         const { stare } = req.body;
@@ -74,7 +114,7 @@ router.patch('/:id/status', async (req, res) => {
         else if (comandaVeche.stare === 'Anulată' && stare !== 'Anulată') {
              for (let item of comandaVeche.produse) {
                 await Carte.findByIdAndUpdate(item.carteId, {
-                    $inc: { stoc: -item.cantitate } // Scădem stocul la loc
+                    $inc: { stoc: -item.cantitate } 
                 });
             }
         }
@@ -91,6 +131,7 @@ router.patch('/:id/status', async (req, res) => {
     }
 });
 
+// 4. Rută pentru ștergerea unei comenzi
 router.delete('/:id', async (req, res) => {
     try {
         const comandaId = req.params.id;

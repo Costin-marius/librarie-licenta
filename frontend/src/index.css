@@ -13,3 +13,12 @@
     display: none; /* Chrome, Safari and Opera */
   }
 }
+@keyframes levitatie {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: levitatie 4s ease-in-out infinite;
+}
