@@ -57,9 +57,25 @@ function CheckoutCart({
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-6 text-right">
-                            <span className="text-stone-500 dark:text-stone-400 text-lg mr-2">Total de plată:</span>
-                            <span className="text-3xl font-bold text-anthracite dark:text-white">{totalCos.toFixed(2)} <span className="text-amber-500">RON</span></span>
+                        <div className="mt-10 bg-white dark:bg-slate-800 p-5 rounded-xl border border-stone-200 dark:border-slate-700 shadow-sm transition-colors">
+                            <div className="flex justify-between items-center text-stone-600 dark:text-stone-400 mb-3 text-lg">
+                                <span>Subtotal:</span>
+                                <span className="font-semibold">{totalCos.toFixed(2)} RON</span>
+                            </div>
+                            <div className="flex justify-between items-center text-stone-600 dark:text-stone-400 mb-5 pb-5 border-b border-stone-100 dark:border-slate-700 text-lg">
+                                <span>Transport:</span>
+                                {totalCos >= 150 ? (
+                                    <span className="font-bold text-green-600 dark:text-green-500 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full text-sm">Gratuit</span>
+                                ) : (
+                                    <span className="font-semibold">30.00 RON</span>
+                                )}
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-stone-500 dark:text-stone-400 text-lg mr-2 font-medium">Total Final:</span>
+                                <span className="text-3xl font-bold text-anthracite dark:text-white">
+                                    {(totalCos + (totalCos >= 150 ? 0 : 30)).toFixed(2)} <span className="text-amber-500">RON</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
 

@@ -9,6 +9,7 @@ const Profil = ({ inapoiLaHome }) => {
     // --- State pentru Comenzi ---
     const [comenzi, setComenzi] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [facturaSelectata, setFacturaSelectata] = useState(null);
     
     const token = localStorage.getItem('token');
     const rol = localStorage.getItem('rol');
@@ -125,6 +126,8 @@ const Profil = ({ inapoiLaHome }) => {
             toast.error('Eroare la server privind schimbarea parolei.');
         }
     };
+
+
 
     // --- FUNCȚIA MAGICĂ PENTRU STATUS (REFACTORIZATĂ) ---
     const randeazaStatusComanda = (statusCurent) => {
@@ -293,7 +296,7 @@ const Profil = ({ inapoiLaHome }) => {
                                         <div key={comanda._id} className="border border-gray-200 dark:border-slate-600 rounded-xl p-5 sm:p-6 bg-stone-50/50 dark:bg-slate-900/50 hover:shadow-md transition-shadow">
                                             
                                             {/* Header Comandă */}
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                            <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
                                                 <div>
                                                     <p className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1">ID Comandă: {comanda._id.slice(-8)}</p>
                                                     <p className="text-sm text-stone-600 dark:text-stone-300 font-medium">
@@ -303,9 +306,13 @@ const Profil = ({ inapoiLaHome }) => {
                                                         </span>
                                                     </p>
                                                 </div>
-                                                <div className="text-left sm:text-right">
+                                                <div className="text-left sm:text-right flex flex-col sm:items-end">
                                                     <p className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1">Total Plată</p>
-                                                    <p className="text-xl font-black text-amber-600 dark:text-amber-500">{comanda.total} lei</p>
+                                                    <p className="text-xl font-black text-amber-600 dark:text-amber-500 mb-2">{comanda.total.toFixed(2)} lei</p>
+                                                    <button onClick={() => setFacturaSelectata(comanda)} className="text-xs flex items-center justify-center gap-1.5 text-stone-600 hover:text-amber-600 dark:text-stone-300 dark:hover:text-amber-400 font-semibold border border-stone-300 hover:border-amber-400 dark:border-slate-600 dark:hover:border-amber-500/50 px-3 py-1.5 rounded-lg transition-colors bg-white dark:bg-slate-800 shadow-sm w-fit">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                        Vezi Factura
+                                                    </button>
                                                 </div>
                                             </div>
 
@@ -322,10 +329,32 @@ const Profil = ({ inapoiLaHome }) => {
                                                                 <span className="w-6 h-6 rounded bg-gray-200 dark:bg-slate-700 text-stone-600 dark:text-stone-300 flex items-center justify-center font-bold text-xs">{produs.cantitate}x</span>
                                                                 <span className="text-stone-600 dark:text-stone-300 font-medium line-clamp-1">{produs.titlu}</span>
                                                             </div>
-                                                            <span className="font-bold text-stone-500 dark:text-stone-400 whitespace-nowrap">{produs.pret} lei</span>
+                                                            <span className="font-bold text-stone-500 dark:text-stone-400 whitespace-nowrap">{(produs.pret * produs.cantitate).toFixed(2)} lei</span>
                                                         </li>
                                                     ))}
                                                 </ul>
+                                                
+                                                {/* Subtotal si Transport render */}
+                                                {(() => {
+                                                    const subtotal = comanda.produse.reduce((acc, p) => acc + (p.pret * p.cantitate), 0);
+                                                    const costTransport = comanda.total - subtotal;
+                                                    return (
+                                                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700/50 flex flex-col gap-2 text-sm max-w-sm ml-auto">
+                                                            <div className="flex justify-between text-stone-500 dark:text-stone-400">
+                                                                <span>Subtotal:</span>
+                                                                <span className="font-medium">{subtotal.toFixed(2)} lei</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-stone-500 dark:text-stone-400">
+                                                                <span>Transport:</span>
+                                                                {costTransport <= 0.01 ? (
+                                                                    <span className="text-green-600 dark:text-green-500 font-bold bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded">Gratuit</span>
+                                                                ) : (
+                                                                    <span className="font-medium">{costTransport.toFixed(2)} lei</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     ))}
@@ -335,6 +364,89 @@ const Profil = ({ inapoiLaHome }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal Factura */}
+            {facturaSelectata && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setFacturaSelectata(null)}>
+                    <div className="bg-white text-stone-900 p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-start mb-8">
+                            <div>
+                                <h2 className="text-3xl font-serif font-bold text-amber-700">BookIo SRL</h2>
+                                <p className="text-xs text-stone-500 mt-1">CUI: RO12345678</p>
+                                <p className="text-xs text-stone-500">Reg. Com.: J40/1234/2026</p>
+                                <p className="text-xs text-stone-500">Strada Literaturii Noi, Nr. 12, București</p>
+                            </div>
+                            <button onClick={() => setFacturaSelectata(null)} className="text-stone-400 hover:text-stone-700 transition-colors p-1">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-stone-200 pb-4 mb-6 gap-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-stone-800">CUMPĂRĂTOR</h3>
+                                <p className="text-sm font-semibold">{facturaSelectata.dateLivrare?.nume || dateUser.nume || 'Client'}</p>
+                                <p className="text-sm">Telefon: {facturaSelectata.dateLivrare?.telefon || '-'}</p>
+                                <p className="text-sm text-stone-600 max-w-xs">{facturaSelectata.dateLivrare?.adresa || dateUser.adresa || 'Nespecificată'}</p>
+                            </div>
+                            <div className="sm:text-right">
+                                <h3 className="text-xl font-black text-stone-800 uppercase tracking-widest">Factură Fiscală</h3>
+                                <p className="text-xs font-bold mt-1">Seria: BKIO Nr: {facturaSelectata._id.slice(-6).toUpperCase()}</p>
+                                <p className="text-xs">Data: {facturaSelectata.createdAt ? new Date(facturaSelectata.createdAt).toLocaleDateString('ro-RO') : new Date().toLocaleDateString('ro-RO')}</p>
+                            </div>
+                        </div>
+
+                        <div className="mb-6 overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[500px]">
+                                <thead>
+                                    <tr className="bg-stone-100 text-stone-700 text-sm">
+                                        <th className="py-3 px-4 rounded-tl-lg font-semibold">Produs</th>
+                                        <th className="py-3 px-4 font-semibold text-center">Cantitate</th>
+                                        <th className="py-3 px-4 font-semibold text-right">Preț Unitar</th>
+                                        <th className="py-3 px-4 rounded-tr-lg font-semibold text-right">Valoare</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-sm text-stone-800 divide-y divide-stone-100">
+                                    {facturaSelectata.produse.map((produs, idx) => (
+                                        <tr key={idx} className="hover:bg-stone-50">
+                                            <td className="py-3 px-4 font-medium">{produs.titlu}</td>
+                                            <td className="py-3 px-4 text-center">{produs.cantitate}</td>
+                                            <td className="py-3 px-4 text-right">{produs.pret.toFixed(2)} lei</td>
+                                            <td className="py-3 px-4 text-right font-semibold">{(produs.pret * produs.cantitate).toFixed(2)} lei</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="flex justify-end pt-4 border-t border-stone-200">
+                            {(() => {
+                                const subtotal = facturaSelectata.produse.reduce((acc, p) => acc + (p.pret * p.cantitate), 0);
+                                const costTransport = facturaSelectata.total - subtotal;
+                                return (
+                                    <div className="w-full sm:w-1/2 max-w-sm space-y-3">
+                                        <div className="flex justify-between text-stone-600">
+                                            <span>Subtotal:</span>
+                                            <span className="font-semibold">{subtotal.toFixed(2)} lei</span>
+                                        </div>
+                                        <div className="flex justify-between text-stone-600">
+                                            <span>Transport:</span>
+                                            <span className="font-semibold">{costTransport <= 0.01 ? 'Gratuit' : `${costTransport.toFixed(2)} lei`}</span>
+                                        </div>
+                                        <div className="flex justify-between text-lg font-bold text-stone-900 border-t border-stone-200 pt-3">
+                                            <span>Total de Plată:</span>
+                                            <span className="text-amber-600">{facturaSelectata.total.toFixed(2)} lei</span>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                        
+                        <div className="mt-12 text-center text-xs text-stone-400">
+                            Vă mulțumim că ați cumpărat de la BookIo!
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

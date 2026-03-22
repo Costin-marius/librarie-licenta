@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom';
+
 function Footer() {
     return (
         <footer className="bg-anthracite dark:bg-slate-950 text-stone-300 pt-20 pb-10 px-6 md:px-12 transition-colors duration-300 mt-20 border-t-4 border-amber-500" data-purpose="main-footer">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
-                <div className="lg:col-span-2">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+                <div className="md:col-span-1">
                     <h2 className="text-4xl font-serif font-bold text-white mb-6 tracking-wide">
                         BookIo<span className="text-amber-500">.</span>
                     </h2>
@@ -20,47 +22,24 @@ function Footer() {
                     </div>
                 </div>
 
-                <div>
-                    <h3 className="text-white font-semibold mb-6 uppercase tracking-widest text-sm opacity-90">Explorează</h3>
-                    <ul className="space-y-3 text-sm text-stone-400">
-                        <li><a className="hover:text-amber-500 hover:translate-x-1 inline-block transition-transform duration-300" href="#">Best Sellers</a></li>
-                        <li><a className="hover:text-amber-500 hover:translate-x-1 inline-block transition-transform duration-300" href="#">Noutăți</a></li>
-                        <li><a className="hover:text-amber-500 hover:translate-x-1 inline-block transition-transform duration-300" href="#">Ediții de lux</a></li>
-                        <li><a className="hover:text-amber-500 hover:translate-x-1 inline-block transition-transform duration-300" href="#">Evenimente</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h3 className="text-white font-semibold mb-6 uppercase tracking-widest text-sm opacity-90">Asistență</h3>
-                    <ul className="space-y-3 text-sm text-stone-400">
-                        <li><a className="hover:text-amber-500 hover:translate-x-1 inline-block transition-transform duration-300" href="#">Livrări și Retur</a></li>
-                        <li><a className="hover:text-amber-500 hover:translate-x-1 inline-block transition-transform duration-300" href="#">Întrebări Frecvente</a></li>
-                        <li><a className="hover:text-amber-500 hover:translate-x-1 inline-block transition-transform duration-300" href="#">Contact</a></li>
-                        <li><a className="hover:text-amber-500 hover:translate-x-1 inline-block transition-transform duration-300" href="#">Card Cadou</a></li>
-                    </ul>
-                </div>
-
-                <div className="lg:col-span-1">
-                    <h3 className="text-white font-semibold mb-6 uppercase tracking-widest text-sm opacity-90">Fii la curent</h3>
-                    <p className="text-sm text-stone-400 mb-4 leading-relaxed">Abonează-te pentru a primi recomandări, oferte exclusive și noutăți editoriale.</p>
-                    <form className="flex flex-col gap-3">
-                        <input type="email" placeholder="Adresa ta de email" className="w-full bg-stone-900 border border-stone-800 text-white text-sm rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent block p-3 outline-none transition-all placeholder-stone-600" />
-                        <button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-lg text-sm px-5 py-3 transition-colors shadow-lg">
-                            Abonează-te
-                        </button>
-                    </form>
+                <div className="md:col-span-1 flex flex-col md:items-end">
+                    <div className="w-full md:w-auto">
+                        <h3 className="text-white font-semibold mb-6 uppercase tracking-widest text-sm opacity-90 md:text-right">Informații Utile</h3>
+                        <ul className="space-y-3 text-sm text-stone-400 md:text-right">
+                            <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/despre-noi">Despre Noi</Link></li>
+                            <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/contact">Contact</Link></li>
+                            <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/livrare">Livrare și Retur</Link></li>
+                            <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/termeni">Termeni și Condiții</Link></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
             <div className="max-w-7xl mx-auto pt-8 border-t border-stone-800/60 text-sm text-stone-500 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors duration-300">
-                <p>© 2026 BookIo Boutique. Creat cu pasiune pentru cititori.</p>
+                <p>© 2026 BookIo. Creat cu pasiune pentru cititori.</p>
                 <div className="flex space-x-3 items-center opacity-60 grayscale hover:grayscale-0 transition-all duration-300 cursor-pointer">
                     <span className="text-xl">💳</span>
                     <span className="text-xs font-semibold uppercase tracking-widest">Securizat</span>
-                </div>
-                <div className="flex space-x-6 font-medium">
-                    <a className="hover:text-amber-500 transition-colors" href="#">Politică de Confidențialitate</a>
-                    <a className="hover:text-amber-500 transition-colors" href="#">Termeni și Condiții</a>
                 </div>
             </div>
         </footer>

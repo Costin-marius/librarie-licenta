@@ -22,6 +22,7 @@ function BookFilters({
                         className="bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-anthracite dark:text-stone-300 text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block w-full p-2 outline-none cursor-pointer transition-colors"
                     >
                         <option value="default">Relevanță</option>
+                        <option value="populare">Cele mai populare</option>
                         <option value="pretCresc">Preț: Crescător</option>
                         <option value="pretDesc">Preț: Descrescător</option>
                         <option value="az">Titlu: A - Z</option>

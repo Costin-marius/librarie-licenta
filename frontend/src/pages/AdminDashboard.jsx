@@ -125,8 +125,10 @@ function AdminDashboard() {
     }
   };
 
+  const normalizareText = (text) => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+
   const cartiFiltrate = carti.filter(carte =>
-    `${carte.titlu} ${carte.autor} ${carte.isbn}`.toLowerCase().includes(termenCautare.toLowerCase())
+    normalizareText(`${carte.titlu} ${carte.autor} ${carte.isbn}`).includes(normalizareText(termenCautare))
   );
 
   // FUNCȚII COMENZI

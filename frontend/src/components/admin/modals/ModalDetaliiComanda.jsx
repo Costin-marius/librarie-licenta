@@ -32,14 +32,29 @@ function ModalDetaliiComanda({ comandaSelectata, setArataModalDetalii }) {
               ))}
             </tbody>
           </table>
-          <div className="mt-6 flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-800">
-            <span className="font-bold text-lg">Total de plată:</span>
-            <span className="font-black text-xl text-blue-600 dark:text-blue-400">{comandaSelectata.total} RON</span>
-          </div>
-          <div className="mt-6 flex justify-end">
-            <button onClick={() => setArataModalDetalii(false)} className="px-5 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors">
-              Închide
-            </button>
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-800">
+            {(() => {
+              const subtotal = comandaSelectata.produse.reduce((sum, item) => sum + (item.pret * item.cantitate), 0);
+              const costTransport = comandaSelectata.total - subtotal;
+              return (
+                <div className="flex flex-col items-end space-y-2">
+                  <div className="flex justify-between w-full sm:w-64 text-sm text-gray-500 dark:text-gray-400">
+                    <span>Subtotal:</span>
+                    <span className="font-medium">{subtotal.toFixed(2)} RON</span>
+                  </div>
+                  <div className="flex justify-between w-full sm:w-64 text-sm text-gray-500 dark:text-gray-400 pb-2">
+                    <span>Transport:</span>
+                    <span className={costTransport <= 0.01 ? "text-green-600 dark:text-green-500 font-bold" : "font-medium"}>
+                      {costTransport <= 0.01 ? 'Gratuit' : `${costTransport.toFixed(2)} RON`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between w-full items-center border-t border-gray-100 dark:border-gray-800 pt-4">
+                    <span className="font-bold text-lg">Total de plată:</span>
+                    <span className="font-black text-xl text-blue-600 dark:text-blue-400">{comandaSelectata.total.toFixed(2)} RON</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

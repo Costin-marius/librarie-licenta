@@ -45,7 +45,7 @@ function TabStatistici({
         <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors duration-300 flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-2xl">💰</div>
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Încasări (fără anulate)</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Încasări brute (include transport)</p>
             <p className="text-2xl font-black text-green-600 dark:text-green-400">{incasariTotale} RON</p>
           </div>
         </div>
