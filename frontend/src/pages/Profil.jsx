@@ -31,10 +31,11 @@ const Profil = ({ inapoiLaHome }) => {
                 
                 if (resProfil.ok) {
                     const data = await resProfil.json();
+                    const infoUser = data.user || data; // Asigurăm fallback-ul, în caz că backend-ul a început să trimită { user: ... }
                     setDateUser({ 
-                        nume: data.nume, 
-                        email: data.email, 
-                        adresa: data.adresa || '' 
+                        nume: infoUser.nume || '', 
+                        email: infoUser.email || '', 
+                        adresa: infoUser.adresa || '' 
                     });
                 } else {
                     toast.error("Sesiune invalida. Te rugam sa te loghezi din nou.");
@@ -222,7 +223,19 @@ const Profil = ({ inapoiLaHome }) => {
                                 {dateUser.nume || 'Utilizator'}
                                 <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md font-semibold font-sans tracking-wide">VERIFICAT</span>
                             </h2>
-                            <p className="text-stone-500 dark:text-stone-400 font-medium mt-1">{dateUser.email || 'Email neconectat'}</p>
+                            <p className="text-stone-500 dark:text-stone-400 font-medium mt-1 mb-4">{dateUser.email || 'Email neconectat'}</p>
+                            <button
+                                onClick={() => {
+                                    localStorage.clear();
+                                    window.location.href = '/';
+                                }}
+                                className="inline-flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-bold border border-red-200 dark:border-red-800/50 px-5 py-2 rounded-xl transition-colors shadow-sm w-fit"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                </svg>
+                                Delogare
+                            </button>
                         </div>
                     </div>
                     <button onClick={inapoiLaHome} className="mt-6 md:mt-0 flex items-center gap-2 text-stone-500 hover:text-amber-600 dark:text-stone-400 dark:hover:text-amber-500 font-medium transition-colors bg-white dark:bg-slate-800 px-6 py-2.5 rounded-xl border border-stone-200 dark:border-slate-700 shadow-sm">

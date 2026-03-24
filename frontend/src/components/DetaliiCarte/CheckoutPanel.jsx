@@ -5,8 +5,22 @@ function CheckoutPanel({ carte, isInWishlist, handleAdaugaInCos, handleToggleWis
         <div className="bg-gray-50 dark:bg-[#1a1f2b] md:dark:bg-gray-800/40 rounded-xl p-6 flex flex-col border border-gray-200 dark:border-gray-700/50 shadow-sm h-full transition-colors duration-300">
             
             {/* Preț */}
-            <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3 transition-colors">
-                {carte.pret} lei
+            <div className="mb-3">
+                {carte.pretVechi && carte.pretVechi > carte.pret && (
+                    <div className="text-lg font-bold text-red-500 line-through mb-1">
+                        {carte.pretVechi} lei
+                    </div>
+                )}
+                <div className="flex items-center gap-3 transition-colors">
+                    <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {carte.pret} lei
+                    </span>
+                    {carte.pretVechi && carte.pretVechi > carte.pret && (
+                        <span className="bg-red-600 text-white font-bold text-xs px-2 py-1 rounded-full shadow-md whitespace-nowrap">
+                            -{Math.round(((carte.pretVechi - carte.pret) / carte.pretVechi) * 100)}% REDUCERE
+                        </span>
+                    )}
+                </div>
             </div>
 
             {localStorage.getItem('rol') === 'admin' ? (

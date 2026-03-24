@@ -26,7 +26,7 @@ function AdminDashboard() {
   const [arataModal, setArataModal] = useState(false);
   const [idEditare, setIdEditare] = useState(null);
   const [dateFormular, setDateFormular] = useState({
-    isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: ''
+    isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', pretVechi: '', stoc: '', imagine_url: ''
   });
 
   // STATE-URI PENTRU COMENZI
@@ -77,7 +77,7 @@ function AdminDashboard() {
   // FUNCȚII CĂRȚI
   const deschideModalAdaugare = () => {
     setIdEditare(null);
-    setDateFormular({ isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', stoc: '', imagine_url: '' });
+    setDateFormular({ isbn: '', titlu: '', autor: '', editura: '', categorie: '', pret: '', pretVechi: '', stoc: '', imagine_url: '' });
     setArataModal(true);
   };
 

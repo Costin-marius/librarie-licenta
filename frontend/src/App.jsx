@@ -212,66 +212,122 @@ function AppContent() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 )}
               </button>
-              {vizualizare === 'magazin' && (
-                <button
+              <div className="relative group">
+                <Link
+                  to={rolUtilizator ? "/profil" : "/login"}
                   onClick={() => {
-                    setArataCos(!arataCos);
-                    setArataWishlist(false);
-                  }}
-                  className="text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors relative"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                  <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                    {cos.reduce((total, produs) => total + (produs.cantitate || 1), 0)}
-                  </span>
-                </button>
-              )}
-              {vizualizare === 'magazin' && (
-                <button
-                  onClick={() => {
-                    setArataWishlist(!arataWishlist);
-                    setArataCos(false);
-                  }}
-                  className="text-anthracite dark:text-stone-300 hover:text-red-500 transition-colors relative ml-2"
-                  title="Wishlist"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                    {wishlist.length}
-                  </span>
-                </button>
-              )}
-              {rolUtilizator ? (
-                <>
-                  <Link
-                    to="/profil"
-                    onClick={() => {
+                    if (rolUtilizator) {
                       setVizualizare('profil');
                       setArataCos(false);
-                    }}
-                    className="text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                  </Link>
+                    } else {
+                      setVizualizare('login');
+                    }
+                  }}
+                  className="flex items-center gap-2 text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors py-2"
+                >
+                  <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  </svg>
+                  <span className="text-sm font-medium hidden lg:block whitespace-nowrap">
+                    {rolUtilizator && numeUtilizator ? numeUtilizator.split(' ')[0] : 'Contul meu'}
+                  </span>
+                </Link>
+                
+                <div className="absolute top-full right-0 mt-0 pt-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg border border-stone-200 dark:border-slate-700 p-4 text-anthracite dark:text-stone-200">
+                    {!rolUtilizator ? (
+                      <div className="flex flex-col gap-3">
+                        <p className="text-sm font-medium">Intră în cont pentru a-ți vedea comenzile</p>
+                        <Link
+                          to="/login"
+                          onClick={() => setVizualizare('login')}
+                          className="w-full text-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-md transition-all text-sm"
+                        >
+                          Autentificare
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <Link
+                          to="/profil"
+                          onClick={() => setVizualizare('profil')}
+                          className="text-sm font-medium hover:text-amber-600 dark:hover:text-amber-500 py-1"
+                        >
+                          Contul meu
+                        </Link>
+                        <hr className="border-stone-200 dark:border-slate-700 my-1" />
+                        <button
+                          onClick={() => {
+                            handleDelogare();
+                            window.location.href = '/';
+                          }}
+                          className="text-sm text-left text-red-500 hover:text-red-600 py-1 flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                          </svg>
+                          Delogare
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {vizualizare === 'magazin' && (
+                <div className="relative group flex items-center">
                   <button
                     onClick={() => {
-                      handleDelogare();
-                      window.location.href = '/';
+                      setArataWishlist(!arataWishlist);
+                      setArataCos(false);
                     }}
-                    title="Delogare"
-                    className="text-anthracite dark:text-stone-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    className="flex items-center gap-2 text-anthracite dark:text-stone-300 hover:text-red-500 transition-colors relative py-2"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <div className="relative">
+                      <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                      </svg>
+                      <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                        {wishlist.length}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium hidden lg:block whitespace-nowrap">Favorite</span>
                   </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setVizualizare('login')}
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-full shadow-sm transition-all"
-                >
-                  Autentificare
-                </Link>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+                    <div className="bg-white dark:bg-slate-800 shadow-xl rounded border border-stone-200 dark:border-slate-700 px-3 py-1.5 text-anthracite dark:text-stone-200 text-xs whitespace-nowrap">
+                      {wishlist.length === 0 ? 'Nu ai favorite încă' : `Ai ${wishlist.length} produse favorite`}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {vizualizare === 'magazin' && (
+                <div className="relative group flex items-center">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setArataCos(true);
+                      setArataWishlist(false);
+                    }}
+                    className="flex items-center gap-2 text-anthracite dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors relative py-2"
+                  >
+                    <div className="relative">
+                      <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                      </svg>
+                      <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                        {cos.reduce((total, produs) => total + (produs.cantitate || 1), 0)}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium hidden lg:block whitespace-nowrap">Coșul meu</span>
+                  </button>
+                  <div className="absolute top-full right-0 lg:left-1/2 lg:-translate-x-1/2 mt-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+                    <div className="bg-white dark:bg-slate-800 shadow-xl rounded border border-stone-200 dark:border-slate-700 px-3 py-1.5 text-anthracite dark:text-stone-200 text-xs whitespace-nowrap">
+                      Vezi produsele din coș
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>

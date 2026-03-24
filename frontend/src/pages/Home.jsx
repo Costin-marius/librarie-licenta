@@ -340,6 +340,22 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
               />
             ) : (
               <>
+                {!arataCos && categorieSelectata === 'Toate' && !termenCautare && cartiProcesate.some(c => c.pretVechi) && (
+                  <div className="mb-12 pt-4">
+                    <h2 className="text-3xl font-bold font-serif text-anthracite dark:text-stone-100 mb-6 flex items-center gap-3">
+                      <span className="text-red-500 text-4xl leading-none">🔥</span> Oferta Săptămânii
+                    </h2>
+                    <div className="flex gap-8 overflow-x-auto pb-8 snap-x snap-mandatory pt-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; }`}</style>
+                      {cartiProcesate.filter(c => c.pretVechi).map(carte => (
+                        <div key={`oferta-${carte._id}`} className="min-w-[280px] w-[280px] snap-center shrink-0">
+                          <BookCard carte={carte} adaugaInCos={adaugaInCos} toggleWishlist={toggleWishlist} wishlist={wishlist} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="mb-4 text-stone-500 dark:text-stone-400 font-medium text-sm flex items-center gap-2">
                   <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -375,15 +391,27 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
                     </div>
 
                     {limitaVizibila < cartiProcesate.length && (
-                      <div className="flex justify-center mt-12 mb-8">
-                        <button onClick={() => setLimitaVizibila(prev => prev + 12)} className="px-8 py-3 bg-white dark:bg-slate-800 border-2 border-amber-500 text-amber-600 dark:text-amber-500 font-bold rounded-full hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white transition-all duration-300 shadow-sm flex items-center gap-2 group">
-                          Afișează mai multe cărți
-                          <svg className="w-5 h-5 transition-transform group-hover:translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    )}
+  <div className="flex justify-center mt-12 mb-12 relative z-10">
+    <button 
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        setLimitaVizibila(prev => prev + 12);
+      }} 
+      className="px-10 py-4 bg-white dark:bg-slate-800 border-2 border-amber-500 text-amber-600 dark:text-amber-500 font-bold rounded-full hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white transition-all duration-300 shadow-md flex items-center justify-center gap-3 group cursor-pointer select-none min-w-[250px]"
+    >
+      <span className="pointer-events-none">Afișează mai multe cărți</span>
+      <svg 
+        className="w-5 h-5 transition-transform group-hover:translate-y-1 pointer-events-none" 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </button>
+  </div>
+)}
                   </>
                 )}
               </>

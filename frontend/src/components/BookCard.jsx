@@ -8,7 +8,12 @@ function BookCard({ carte, adaugaInCos, toggleWishlist, wishlist }) {
         <div className="group relative bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-[0_20px_25px_-5px_rgba(0,0,0,0.05),0_10px_10px_-5px_rgba(0,0,0,0.02)] dark:shadow-none dark:border dark:border-slate-700/50 transition-all duration-500" data-purpose="book-card">
             <div className="relative mb-4 group/image overflow-hidden rounded-xl">
                 <Link to={`/carte/${carte._id}`}>
-                    <div className="w-full aspect-[2/3] transition-all duration-500 z-10 bg-stone-100 dark:bg-slate-700">
+                    <div className="w-full aspect-[2/3] transition-all duration-500 z-10 bg-stone-100 dark:bg-slate-700 relative">
+                        {carte.pretVechi && carte.pretVechi > carte.pret && (
+                            <div className="absolute top-0 left-0 z-30 bg-red-600 text-white font-bold text-xs md:text-sm px-2 py-1 rounded-br-lg shadow-md">
+                                -{Math.round(((carte.pretVechi - carte.pret) / carte.pretVechi) * 100)}%
+                            </div>
+                        )}
                         <img 
                             alt={carte.titlu} 
                             className="w-full h-full object-cover shadow-xl dark:shadow-slate-950/50 group-hover/image:scale-105 transition-transform duration-700 ease-out" 
@@ -76,7 +81,12 @@ function BookCard({ carte, adaugaInCos, toggleWishlist, wishlist }) {
                     </h3>
                 </Link>
                 <p className="text-sm text-stone-500 dark:text-stone-400 mt-2 line-clamp-1">Editura: {carte.editura}</p>
-                <div className="mt-4 pt-3 flex items-center justify-center w-full">
+                <div className="mt-4 pt-3 flex items-center justify-center w-full gap-3">
+                    {carte.pretVechi && (
+                        <span className="text-base font-bold text-red-500 line-through">
+                            {carte.pretVechi} lei
+                        </span>
+                    )}
                     <span className="text-2xl font-black text-amber-500">
                         {carte.pret} <span className="text-base font-bold">lei</span>
                     </span>

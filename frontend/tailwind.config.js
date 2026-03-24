@@ -13,8 +13,8 @@ module.exports = {
         'anthracite': '#374151',
       },
       fontFamily: {
-        serif: ['"Playfair Display"', 'serif'],
-        sans: ['Inter', 'sans-serif'],
+        serif: ['Georgia', '"Times New Roman"', 'serif'],
+        sans: ['Arial', 'Helvetica', 'sans-serif'],
       },
     },
   },

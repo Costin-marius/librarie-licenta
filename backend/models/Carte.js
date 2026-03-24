@@ -22,6 +22,10 @@ const carteSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    pretVechi: {
+        type: Number,
+        required: false
+    },
     stoc: {
         type: Number,
         required: true,

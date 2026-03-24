@@ -19,15 +19,27 @@ function ModalFormularCarte({ idEditare, inchideModal, salveazaCarte, dateFormul
               />
             </div>
           ))}
-          <div>
-            <label className="block text-xs font-medium text-gray-400 uppercase mb-1">Preț (RON)</label>
-            <input
-              type="number"
-              required
-              value={dateFormular.pret}
-              onChange={(e) => setDateFormular({ ...dateFormular, pret: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-400 uppercase mb-1 text-red-400">Preț Vechi (Opțional)</label>
+              <input
+                type="number"
+                value={dateFormular.pretVechi || ''}
+                onChange={(e) => setDateFormular({ ...dateFormular, pretVechi: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
+                placeholder="Ex: 50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-400 uppercase mb-1">Preț Nou/Curent</label>
+              <input
+                type="number"
+                required
+                value={dateFormular.pret}
+                onChange={(e) => setDateFormular({ ...dateFormular, pret: e.target.value })}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg"
+              />
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-400 uppercase mb-1">Stoc (Buc)</label>
