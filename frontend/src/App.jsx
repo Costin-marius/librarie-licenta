@@ -10,6 +10,7 @@ import Contact from './pages/Contact';
 import Livrare from './pages/Livrare';
 import Termeni from './pages/Termeni';
 import WishlistDrawer from './components/WishlistDrawer';
+import ChatWidget from './components/ChatWidget';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 
 function AppContent() {
@@ -22,14 +23,22 @@ function AppContent() {
   const [vizualizare, setVizualizare] = useState(location.pathname === '/login' ? 'login' : 'magazin');
 
   const [cos, setCos] = useState(() => {
-    const saved = localStorage.getItem('cos');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('cos');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
   const [arataCos, setArataCos] = useState(false);
 
   const [wishlist, setWishlist] = useState(() => {
-    const saved = localStorage.getItem('wishlist');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('wishlist');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
   const [arataWishlist, setArataWishlist] = useState(false);
 
@@ -383,6 +392,7 @@ function AppContent() {
       </main>
 
       <WishlistDrawer deschis={arataWishlist} setDeschis={setArataWishlist} wishlist={wishlist} setWishlist={setWishlist} />
+      <ChatWidget cos={cos} setCos={setCos} />
     </div>
   );
 }

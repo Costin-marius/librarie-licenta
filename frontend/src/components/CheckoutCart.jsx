@@ -1,17 +1,75 @@
+import { useState } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+
 function CheckoutCart({
     cos,
     totalCos,
     setArataCos,
     modificaCantitate,
     eliminaDinCos,
-    plaseazaComanda,
-    dateLivrare,
-    setDateLivrare,
-    metodaPlata,
-    setMetodaPlata,
-    dateCard,
-    setDateCard
+    setCos,
+    userId,
+    fetchCarti
 }) {
+    const [metodaPlata, setMetodaPlata] = useState('ramburs');
+    const [dateLivrare, setDateLivrare] = useState({ nume: '', adresa: '', telefon: '' });
+    const [dateCard, setDateCard] = useState({ numar: '', expirare: '', cvv: '' });
+
+    const plaseazaComanda = async (e) => {
+        e.preventDefault();
+        const idUtilizator = userId || localStorage.getItem('userId');
+        const token = localStorage.getItem('token');
+        
+        if (!idUtilizator && !localStorage.getItem('rol')) {
+            toast.error("Trebuie să fii autentificat pentru a plasa o comandă!");
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 1500);
+            return;
+        }
+
+        const costTransport = totalCos >= 150 ? 0 : 30;
+        const totalFinal = totalCos + costTransport;
+
+        const dateComanda = {
+            userId: idUtilizator,
+            dateLivrare,
+            metodaPlata,
+            total: Number(totalFinal.toFixed(2)),
+            produse: cos.map(item => ({ 
+                carteId: item._id, 
+                titlu: item.titlu, 
+                cantitate: item.cantitate, 
+                pret: item.pret 
+            }))
+        };
+
+        try {
+            await axios.post('http://localhost:5000/api/comenzi', dateComanda);
+            toast.success(`Comanda plasată cu succes!`);
+            
+            if (token) {
+                try {
+                    await axios.delete('http://localhost:5000/api/user/cos/goleste', { 
+                        headers: { Authorization: `Bearer ${token}` } 
+                    });
+                } catch (err) {
+                    console.error("Nu am putut goli coșul din baza de date", err);
+                }
+            }
+            
+            setCos([]);
+            setDateLivrare({ nume: '', adresa: '', telefon: '' });
+            setDateCard({ numar: '', expirare: '', cvv: '' });
+            setArataCos(false);
+            if (fetchCarti) fetchCarti();
+        } catch (error) {
+            console.error(error);
+            toast.error("Eroare la plasarea comenzii. Verifică datele introduse!");
+        }
+    };
+
     return (
         <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-stone-200 dark:border-slate-700 transition-colors duration-300">
             <div className="flex justify-between items-center border-b border-stone-100 dark:border-slate-700 pb-4 mb-6">

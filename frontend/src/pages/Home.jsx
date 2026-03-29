@@ -47,9 +47,6 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
     sessionStorage.setItem('memorieLimita', limitaVizibila);
   }, [limitaVizibila]);
 
-  const [metodaPlata, setMetodaPlata] = useState('ramburs');
-  const [dateLivrare, setDateLivrare] = useState({ nume: '', adresa: '', telefon: '' });
-  const [dateCard, setDateCard] = useState({ numar: '', expirare: '', cvv: '' });
 
   useEffect(() => {
     fetchCarti();
@@ -89,57 +86,19 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
     }
   }, []);
 
-  // Funcția deșteaptă de aflare a înălțimii paginii și restaurare
+  // Restaurare Scroll Simplificată
   useEffect(() => {
     if (carti.length > 0) {
       const scrollSalvat = sessionStorage.getItem('memorieScroll');
-      if (scrollSalvat && parseInt(scrollSalvat) > 0) {
-        const pozitieTinta = parseInt(scrollSalvat);
-        let curatat = false;
-        
-        const incearcaScroll = () => {
-          if (curatat) return true;
-          const inaltimeCurenta = document.documentElement.scrollHeight;
-          if (inaltimeCurenta >= pozitieTinta) {
-            window.scrollTo(0, pozitieTinta);
-            return true;
-          }
-          return false;
-        };
-
-        if (incearcaScroll()) return;
-        
-        const mutationObserver = new MutationObserver(() => {
-          if (incearcaScroll()) curataTot();
-        });
-        mutationObserver.observe(document.body, { childList: true, subtree: true });
-        
-        const resizeObserver = new ResizeObserver(() => {
-          if (incearcaScroll()) curataTot();
-        });
-        resizeObserver.observe(document.body);
-        
-        const curataTot = () => {
-          if (curatat) return;
-          curatat = true;
-          mutationObserver.disconnect();
-          resizeObserver.disconnect();
-        };
-        
-        const timeoutId = setTimeout(() => {
-          if (!curatat) {
-            window.scrollTo(0, Math.min(pozitieTinta, document.documentElement.scrollHeight));
-            curataTot();
-          }
-        }, 3000);
-        
-        return () => {
-          curataTot();
-          clearTimeout(timeoutId);
-        };
+      if (scrollSalvat) {
+        // Un mic timeout asigură că randarea s-a terminat
+        setTimeout(() => {
+          window.scrollTo(0, parseInt(scrollSalvat));
+        }, 100);
       }
     }
   }, [carti]);
+
 
   const fetchCarti = async () => {
     setSeIncarca(true); // Începem încărcarea
@@ -230,47 +189,7 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
     toast.error('Produs eliminat din coș.');
   };
 
-  const plaseazaComanda = async (e) => {
-    e.preventDefault();
-    const idUtilizator = userId || localStorage.getItem('userId');
-    const token = localStorage.getItem('token');
-    if (!idUtilizator && !localStorage.getItem('rol')) {
-      toast.error("Trebuie să fii autentificat pentru a plasa o comandă!");
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 1500);
-      return;
-    }
-    const costTransport = totalCos >= 150 ? 0 : 30;
-    const totalFinal = totalCos + costTransport;
 
-    const dateComanda = {
-      userId: idUtilizator,
-      dateLivrare,
-      metodaPlata,
-      total: Number(totalFinal.toFixed(2)),
-      produse: cos.map(item => ({ carteId: item._id, titlu: item.titlu, cantitate: item.cantitate, pret: item.pret }))
-    };
-    try {
-      await axios.post('http://localhost:5000/api/comenzi', dateComanda);
-      toast.success(`Comanda plasată cu succes!`);
-      if (token) {
-        try {
-          await axios.delete('http://localhost:5000/api/user/cos/goleste', { headers: { Authorization: `Bearer ${token}` } });
-        } catch (err) {
-          console.error("Nu am putut goli coșul din baza de date", err);
-        }
-      }
-      setCos([]);
-      setDateLivrare({ nume: '', adresa: '', telefon: '' });
-      setDateCard({ numar: '', expirare: '', cvv: '' });
-      setArataCos(false);
-      fetchCarti();
-    } catch (error) {
-      console.error(error);
-      toast.error("Eroare la plasarea comenzii. Verifică datele introduse!");
-    }
-  };
 
   const totalCos = cos.reduce((total, item) => total + (item.pret * item.cantitate), 0);
   const categoriiDisponibile = ['Toate', ...new Set(carti.map(c => c.categorie).filter(cat => cat && cat.trim() !== ''))];
@@ -330,13 +249,9 @@ function Home({ cos, setCos, arataCos, setArataCos, termenCautare, userId, wishl
                 setArataCos={setArataCos}
                 modificaCantitate={modificaCantitate}
                 eliminaDinCos={eliminaDinCos}
-                plaseazaComanda={plaseazaComanda}
-                dateLivrare={dateLivrare}
-                setDateLivrare={setDateLivrare}
-                metodaPlata={metodaPlata}
-                setMetodaPlata={setMetodaPlata}
-                dateCard={dateCard}
-                setDateCard={setDateCard}
+                setCos={setCos}
+                userId={userId}
+                fetchCarti={fetchCarti}
               />
             ) : (
               <>
