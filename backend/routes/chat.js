@@ -22,9 +22,53 @@ router.post('/', async (req, res) => {
         const userMessage = req.body.message;
         const history = req.body.history || [];
 
-        // Ne asigurăm că trimitem un array valid de mesaje
+        // 1. Pre-căutare în MongoDB (Context Injection / Mini-RAG)
+        const stopWords = ['carte', 'cartea', 'carti', 'cărți', 'cărțile', 'un', 'o', 'de', 'la', 'din', 'pentru', 'cu', 'si', 'și', 'sau', 'arata-mi', 'arata', 'vreau', 'caut', 'ai', 'aveti', 'aveți', 'este', 'sunt', 'care', 'ce', 'cine', 'unde', 'cat', 'cât', 'câte', 'cate', 'pagini', 'are', 'costa', 'costă', 'prețul', 'pretul', 'editura', 'autorul', 'despre', 'va', 'rog', 'cum', 'imi', 'îmi', 'poti', 'poți', 'spune', 'zice'];
+        
+        // Curățăm textul pentru a reține doar keyword-urile solide
+        const words = userMessage.toLowerCase()
+                                .replace(/[.,?!\[\]{}()]/g, '')
+                                .split(/\s+/)
+                                .filter(w => w.length > 2 && !stopWords.includes(w));
+        
+        let preSearchContext = "";
+
+        if (words.length > 0) {
+            let forgivingRegexStr = words.join('.*');
+            const regexQuery = new RegExp(forgivingRegexStr, "i");
+
+            try {
+                let dbQuery = {
+                    $or: [
+                        { titlu: regexQuery },
+                        { autor: regexQuery },
+                        { editura: regexQuery }
+                    ]
+                };
+
+                let preFoundBooks = await Carte.find(dbQuery)
+                    .select('_id titlu autor pret descriere editura anPublicare nrPagini')
+                    .limit(4);
+
+                if (preFoundBooks.length > 0) {
+                    let contextLines = preFoundBooks.map(b => 
+                        `- Titlu: ${b.titlu}, Autor: ${b.autor}, Editura: ${b.editura || 'N/A'}, Pagini: ${b.nrPagini || 'N/A'}, Preț: ${b.pret} RON, Descriere: ${(b.descriere || '').substring(0, 250)}...`
+                    );
+                    preSearchContext = `\n\nInformații din sistem (stoc curent): Iată ce am găsit în baza de date legat de întrebarea utilizatorului:\n${contextLines.join('\n')}\nFolosește strict aceste detalii pentru a formula un răspuns natural, prietenos și detaliat.`;
+                }
+            } catch (err) {
+                console.error("Eroare la pre-cautare RAG MongoDB:", err);
+            }
+        }
+
+        let dynamicSystemPrompt = SYSTEM_PROMPT;
+        if (preSearchContext) {
+            dynamicSystemPrompt += preSearchContext;
+        }
+
+        // Ne asigurăm că trimitem un array valid de mesaje îmbogățit cu pre-context if any
         const messages = [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: dynamicSystemPrompt },
             ...history,
             { role: "user", content: userMessage }
         ];

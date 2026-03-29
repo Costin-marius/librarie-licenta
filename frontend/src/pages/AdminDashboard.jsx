@@ -163,9 +163,13 @@ function AdminDashboard() {
 
   // CALCUL STATISTICI PENTRU CARDURI
   const totalCartiInStoc = carti.reduce((acc, carte) => acc + Number(carte.stoc || 0), 0);
-  const totalComenziIstoric = comenzi.length;
-  const incasariTotale = comenzi
-    .filter(c => c.stare !== 'Anulată')
+  
+  // Filtrăm DOAR comenzile de succes (excludem testele "Plasată" abia inițiate, anulate etc.)
+  const statusuriValide = ['În procesare', 'Expediată', 'Livrată'];
+  const comenziValide = comenzi.filter(c => statusuriValide.includes(c.stare));
+  
+  const totalComenziIstoric = comenziValide.length;
+  const incasariTotale = comenziValide
     .reduce((acc, comanda) => acc + Number(comanda.total || 0), 0)
     .toFixed(2);
 
@@ -183,27 +187,28 @@ function AdminDashboard() {
         : dataCurenta.toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit' });
 
       const comenziInZi = comenzi.filter(c => {
-        if (!c.createdAt || c.stare === 'Anulată') return false;
+        if (!c.createdAt || !statusuriValide.includes(c.stare)) return false;
         const dataComanda = new Date(c.createdAt);
-        if (perioadaGrafic > 30) {
-          return dataComanda.getMonth() === dataCurenta.getMonth() && dataComanda.getFullYear() === dataCurenta.getFullYear();
-        } else {
-          return dataComanda.getDate() === dataCurenta.getDate() && dataComanda.getMonth() === dataCurenta.getMonth();
-        }
+        // CRITIC BUG FIX: Chiar dacă grupăm pe luni pe grafic, iterăm tot din zi în zi prin cele 365!
+        // Deci filtrăm STRICT doar comenzile plasate în această zi specifică iterată pentru a nu le aduna de 30 de ori pe fiecare lună!
+        return dataComanda.getDate() === dataCurenta.getDate() && 
+               dataComanda.getMonth() === dataCurenta.getMonth() &&
+               dataComanda.getFullYear() === dataCurenta.getFullYear();
       });
 
       const incasariZi = comenziInZi.reduce((sum, c) => sum + Number(c.total || 0), 0);
+      const incasariZiRotunjite = Math.round(incasariZi * 100) / 100;
 
       if (perioadaGrafic > 30) {
         const existDeja = dateGrafic.find(d => d.data === formatData);
         if (existDeja) {
-          existDeja.incasari += incasariZi;
+          existDeja.incasari = Math.round((existDeja.incasari + incasariZiRotunjite) * 100) / 100;
           existDeja.comenzi += comenziInZi.length;
         } else {
-          dateGrafic.push({ data: formatData, incasari: incasariZi, comenzi: comenziInZi.length });
+          dateGrafic.push({ data: formatData, incasari: incasariZiRotunjite, comenzi: comenziInZi.length });
         }
       } else {
-        dateGrafic.push({ data: formatData, incasari: Number(incasariZi.toFixed(2)), comenzi: comenziInZi.length });
+        dateGrafic.push({ data: formatData, incasari: incasariZiRotunjite, comenzi: comenziInZi.length });
       }
     }
     return dateGrafic;

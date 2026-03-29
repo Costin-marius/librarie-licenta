@@ -11,11 +11,12 @@ function TabStatistici({
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      const sumaCurata = Number(payload[0].value).toFixed(2);
       return (
-        <div className="bg-gray-900 border border-gray-700 p-4 rounded-lg shadow-2xl">
-          <p className="text-gray-400 text-xs font-bold mb-2">{label}</p>
-          <p className="text-blue-400 font-black text-lg">{payload[0].value} RON</p>
-          <p className="text-gray-500 text-xs mt-1">{payload[0].payload.comenzi} comenzi</p>
+        <div className="bg-gray-900 border border-gray-700 p-4 rounded-lg shadow-2xl z-50 relative">
+          <p className="text-gray-300 text-sm font-bold mb-2">{label}</p>
+          <p className="text-blue-400 font-black text-xl">{sumaCurata} RON</p>
+          <p className="text-gray-400 text-sm mt-1">{payload[0].payload.comenzi} comenzi valide</p>
         </div>
       );
     }
@@ -71,7 +72,7 @@ function TabStatistici({
         
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={dateGraficGenerate} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={dateGraficGenerate} margin={{ top: 10, right: 10, left: 15, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorIncasari" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.6}/>
@@ -79,8 +80,8 @@ function TabStatistici({
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.3} />
-              <XAxis dataKey="data" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value} lei`} />
+              <XAxis dataKey="data" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="#e5e7eb" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value} lei`} />
               <Tooltip content={<CustomTooltip />} />
               <Area type="monotone" dataKey="incasari" stroke="#3b82f6" strokeWidth={4} activeDot={{ r: 8 }} fillOpacity={1} fill="url(#colorIncasari)" />
             </AreaChart>

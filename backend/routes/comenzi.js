@@ -46,9 +46,10 @@ router.get('/statistici/vanzari', async (req, res) => {
         // Facem agregarea în baza de date
         const statistici = await Comanda.aggregate([
             {
-                // Luăm doar comenzile mai noi de acum 7 zile
+                // Luăm doar comenzile mai noi de acum 7 zile și tranzacționate valid
                 $match: {
-                    createdAt: { $gte: sapteZileInUrma }
+                    createdAt: { $gte: sapteZileInUrma },
+                    stare: { $in: ['În procesare', 'Expediată', 'Livrată'] } // FĂRĂ 'Anulată' sau 'Plasată' (în așteptare neplătită)
                 }
             },
             {
@@ -65,10 +66,10 @@ router.get('/statistici/vanzari', async (req, res) => {
             }
         ]);
 
-        // Redenumim _id în "data" pentru a fi mai ușor de citit în Frontend
+        // Redenumim _id în "data" pentru a fi mai ușor de citit în Frontend și rotunjim sumele pentru a rezolva problema de 'floating point math' din JS
         const dateFormatate = statistici.map(stat => ({
             data: stat._id,
-            incasari: stat.incasari,
+            incasari: Math.round(stat.incasari * 100) / 100, // Evită sumele de genul 6539.69999999
             comenzi: stat.comenzi
         }));
 
