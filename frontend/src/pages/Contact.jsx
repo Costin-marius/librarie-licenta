@@ -10,7 +10,7 @@ function Contact() {
         <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-sm border border-stone-200 dark:border-stone-700 mt-8">
             <h2 className="text-2xl font-bold text-anthracite dark:text-stone-200 mb-6">Ne-ar face plăcere să te auzim</h2>
             <p className="text-stone-600 dark:text-stone-400 mb-8 leading-relaxed">
-              Dacă ai întrebări despre comanda ta, dorești recomandări de lectură sau vrei pur și simplu să ne spui părerea ta, nu ezita să ne contactezi folosind datele de mai jos.
+              Dacă ai întrebări despre comanda ta, dorești recomandări de lectură sau vrei pur și simplu să ne spui părerea ta, nu ezita să ne contactezi folosind datele de mai jos. Menționăm că adresa de mai jos este una fictivă pentru acest proiect.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -27,7 +27,7 @@ function Contact() {
                         </li>
                         <li className="flex items-center gap-3">
                             <span className="text-2xl">✉️</span>
-                            <span>salut@bookio-boutique.ro</span>
+                            <span>costinmarius23@stud.ase.ro</span>
                         </li>
                     </ul>
                 </div>

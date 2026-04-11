@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import OrderStatusStepper from './OrderStatusStepper';
 import { generateInvoicePDF } from './FacturaPDF';
 
 const IstoricComenzi = ({ comenzi, dateUser, inapoiLaHome }) => {
+    const [loadingStripe, setLoadingStripe] = useState(false);
+
+    const reincearcaPlata = async (comanda) => {
+        try {
+            setLoadingStripe(true);
+            const resStripe = await axios.post('http://localhost:5000/api/stripe/create-checkout-session', {
+                comandaId: comanda._id,
+                produse: comanda.produse,
+                totalFinal: comanda.total
+            });
+            window.location.href = resStripe.data.url;
+        } catch (error) {
+            console.error("Eroare la reinițializarea plății", error);
+            toast.error("Eroare la conectarea cu Stripe. Te rugăm să încerci din nou mai târziu.");
+        } finally {
+            setLoadingStripe(false);
+        }
+    };
+
     return (
         <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-stone-100 dark:border-slate-700 transition-colors h-full">
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100 dark:border-slate-700">
@@ -36,6 +57,7 @@ const IstoricComenzi = ({ comenzi, dateUser, inapoiLaHome }) => {
                                 <div className="text-left sm:text-right flex flex-col sm:items-end">
                                     <p className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1">Total Plată</p>
                                     <p className="text-xl font-black text-amber-600 dark:text-amber-500 mb-2">{comanda.total.toFixed(2)} lei</p>
+                                    
                                     <button onClick={() => generateInvoicePDF(comanda, dateUser)} className="text-xs flex items-center justify-center gap-1.5 text-stone-600 hover:text-amber-600 dark:text-stone-300 dark:hover:text-amber-400 font-semibold border border-stone-300 hover:border-amber-400 dark:border-slate-600 dark:hover:border-amber-500/50 px-3 py-1.5 rounded-lg transition-colors bg-white dark:bg-slate-800 shadow-sm w-fit">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                         Descarcă Factura

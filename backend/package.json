@@ -18,7 +18,9 @@
     "groq-sdk": "^1.1.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.4",
-    "node-cron": "^4.2.1"
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.5",
+    "stripe": "^22.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

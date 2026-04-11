@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -182,6 +182,14 @@ function Login({ setRolUtilizator, setVizualizare, setNumeUtilizator }) {
                     >
                         {isLogin ? '🔑 Intră în cont' : '✨ Creează cont'}
                     </button>
+
+                    {isLogin && (
+                        <div className="text-right mt-2">
+                             <Link to="/forgot-password" className="text-sm text-gray-400 hover:text-blue-400 transition-colors">
+                                Ai uitat parola?
+                             </Link>
+                        </div>
+                    )}
                 </form>
 
                 <div className="mt-8 text-center border-t border-gray-800 pt-6">

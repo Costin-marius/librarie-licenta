@@ -12,6 +12,10 @@ const app = express();
 
 // Middleware
 app.use(cors());
+
+// Webhook-ul Stripe TREBUIE înregistrat înainte de express.json() pentru a avea acces la body-ul brut (raw)
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }), require('./routes/stripeWebhook'));
+
 app.use(express.json());
 
 const authRoutes = require('./routes/auth');
@@ -21,6 +25,7 @@ app.use('/api/comenzi', require('./routes/comenzi'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/cos', cosRoutes);
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/stripe', require('./routes/stripe'));
 
 // Conectarea la baza de date
 mongoose.connect(process.env.MONGO_URI)

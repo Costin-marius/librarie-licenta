@@ -14,7 +14,6 @@ function CheckoutCart({
 }) {
     const [metodaPlata, setMetodaPlata] = useState('ramburs');
     const [dateLivrare, setDateLivrare] = useState({ nume: '', adresa: '', telefon: '' });
-    const [dateCard, setDateCard] = useState({ numar: '', expirare: '', cvv: '' });
 
     const plaseazaComanda = async (e) => {
         e.preventDefault();
@@ -46,7 +45,23 @@ function CheckoutCart({
         };
 
         try {
-            await axios.post('http://localhost:5000/api/comenzi', dateComanda);
+            if (metodaPlata === 'card') {
+                toast.info("Te redirecționăm către platforma de plată securizată Stripe...");
+                
+                // Trimitem toate datele direct către sesiunea Stripe (nu salvăm încă în DB)
+                const resStripe = await axios.post('http://localhost:5000/api/stripe/create-checkout-session', {
+                    userId: idUtilizator,
+                    produse: dateComanda.produse,
+                    dateLivrare: dateComanda.dateLivrare,
+                    totalFinal: dateComanda.total
+                });
+                
+                window.location.href = resStripe.data.url;
+                return;
+            }
+
+            // Dacă e Ramburs, păstrăm fluxul clasic
+            const response = await axios.post('http://localhost:5000/api/comenzi', dateComanda);
             toast.success(`Comanda plasată cu succes!`);
             
             if (token) {
@@ -61,12 +76,11 @@ function CheckoutCart({
             
             setCos([]);
             setDateLivrare({ nume: '', adresa: '', telefon: '' });
-            setDateCard({ numar: '', expirare: '', cvv: '' });
             setArataCos(false);
             if (fetchCarti) fetchCarti();
         } catch (error) {
             console.error(error);
-            toast.error("Eroare la plasarea comenzii. Verifică datele introduse!");
+            toast.error("Eroare la procesarea comenzii. Verifică datele introduse!");
         }
     };
 
@@ -180,77 +194,16 @@ function CheckoutCart({
                                 </div>
                             </div>
 
-                            {/* Formular Card */}
+                            {/* Info Stripe pentru Card */}
                             {metodaPlata === 'card' && (
-                                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-stone-200 dark:border-slate-700 shadow-sm mt-4 space-y-4 transition-colors">
-                                    <p className="text-amber-600 dark:text-amber-500 text-sm font-bold flex items-center gap-2">💳 Plată Securizată</p>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Număr Card (16 cifre)" 
-                                        required={metodaPlata === 'card'} 
-                                        value={dateCard.numar} 
-                                        onChange={e => {
-                                            const val = e.target.value.replace(/[^0-9]/g, '');
-                                            if(val.length <= 16) setDateCard({...dateCard, numar: val});
-                                        }} 
-                                        className={`w-full px-4 py-2 bg-stone-50 dark:bg-slate-900 border rounded-lg text-anthracite dark:text-white focus:outline-none focus:ring-2 transition-colors ${
-                                            dateCard.numar.length > 0 && dateCard.numar.length !== 16 
-                                                ? 'border-red-500 focus:ring-red-500' 
-                                                : 'border-stone-200 dark:border-slate-600 focus:ring-amber-500'
-                                        }`} 
-                                    />
-                                    
-                                    {(() => {
-                                        const parts = dateCard.expirare.split('/');
-                                        const luna = parseInt(parts[0], 10);
-                                        const an = parseInt(parts[1], 10);
-                                        const dataCurenta = new Date();
-                                        const anCurent = dataCurenta.getFullYear() % 100;
-                                        const lunaCurenta = dataCurenta.getMonth() + 1;
-                                        
-                                        const isLunaInvalida = dateCard.expirare.length === 5 && (luna < 1 || luna > 12);
-                                        const isCardExpirat = dateCard.expirare.length === 5 && !isLunaInvalida && (an < anCurent || (an === anCurent && luna < lunaCurenta));
-                                        const areEroareLungime = dateCard.expirare.length > 0 && dateCard.expirare.length !== 5;
-                                        const areEroareExpirare = areEroareLungime || isLunaInvalida || isCardExpirat;
-
-                                        return (
-                                            <div className="flex gap-4 items-start">
-                                                <div className="w-1/2 flex flex-col">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Expirare (LL/AA)" 
-                                                        required={metodaPlata === 'card'} 
-                                                        value={dateCard.expirare} 
-                                                        onChange={e => {
-                                                            let val = e.target.value.replace(/[^0-9]/g, '');
-                                                            if (val.length >= 3) val = val.substring(0, 2) + '/' + val.substring(2, 4);
-                                                            setDateCard({...dateCard, expirare: val});
-                                                        }} 
-                                                        className={`w-full px-4 py-2 bg-stone-50 dark:bg-slate-900 border rounded-lg text-anthracite dark:text-white focus:outline-none focus:ring-2 transition-colors ${
-                                                            areEroareExpirare ? 'border-red-500 focus:ring-red-500' : 'border-stone-200 dark:border-slate-600 focus:ring-amber-500'
-                                                        }`} 
-                                                    />
-                                                    {isLunaInvalida && <span className="text-red-500 text-[11px] mt-1 ml-1 font-medium">Lună invalidă</span>}
-                                                    {isCardExpirat && <span className="text-red-500 text-[11px] mt-1 ml-1 font-medium">Card expirat!</span>}
-                                                </div>
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="CVV (3 cifre)" 
-                                                    required={metodaPlata === 'card'} 
-                                                    value={dateCard.cvv} 
-                                                    onChange={e => {
-                                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                                        if(val.length <= 3) setDateCard({...dateCard, cvv: val});
-                                                    }} 
-                                                    className={`w-1/2 px-4 py-2 bg-stone-50 dark:bg-slate-900 border rounded-lg text-anthracite dark:text-white focus:outline-none focus:ring-2 transition-colors ${
-                                                        dateCard.cvv.length > 0 && dateCard.cvv.length !== 3 
-                                                            ? 'border-red-500 focus:ring-red-500' 
-                                                            : 'border-stone-200 dark:border-slate-600 focus:ring-amber-500'
-                                                    }`} 
-                                                />
-                                            </div>
-                                        );
-                                    })()}
+                                <div className="bg-stone-50 dark:bg-slate-900 p-5 rounded-xl border border-amber-200 dark:border-amber-900/50 shadow-sm mt-4 transition-colors">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                        <p className="text-amber-600 dark:text-amber-500 font-bold">Plată Securizată Stripe</p>
+                                    </div>
+                                    <p className="text-stone-600 dark:text-stone-400 text-sm leading-relaxed">
+                                        Vei fi redirecționat către platforma securizată Stripe pentru a efectua plata. Aplicația noastră nu colectează și nu stochează datele cardului tău.
+                                    </p>
                                 </div>
                             )}
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 
 export default function WishlistDrawer({ deschis, setDeschis, wishlist, setWishlist }) {
     const [carti, setCarti] = useState([]);
@@ -56,16 +57,22 @@ export default function WishlistDrawer({ deschis, setDeschis, wishlist, setWishl
                     ) : (
                         carti.map(carte => (
                             <div key={carte._id} className="group flex gap-4 bg-stone-50 dark:bg-slate-800 p-4 rounded-xl border border-stone-200 dark:border-slate-700 relative hover:border-amber-400 dark:hover:border-amber-500 transition-colors">
-                                <div className="w-20 h-28 flex-shrink-0">
-                                    <img src={carte.imagine_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80"} alt={carte.titlu} className="w-full h-full object-cover rounded-md shadow-sm" />
-                                </div>
-                                <div className="flex flex-col flex-grow pr-8">
-                                    <p className="text-[10px] uppercase text-stone-500 font-bold mb-1 line-clamp-1">{carte.autor}</p>
-                                    <h4 className="text-sm font-serif font-bold text-anthracite dark:text-stone-200 line-clamp-2 mb-2">{carte.titlu}</h4>
-                                    <span className="mt-auto text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-500 font-black text-lg">
-                                        {carte.pret} <span className="text-xs font-bold text-amber-500 opacity-80 uppercase">RON</span>
-                                    </span>
-                                </div>
+                                <Link 
+                                    to={`/carte/${carte._id}`} 
+                                    onClick={() => setDeschis(false)}
+                                    className="flex gap-4 flex-grow"
+                                >
+                                    <div className="w-20 h-28 flex-shrink-0">
+                                        <img src={carte.imagine_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80"} alt={carte.titlu} className="w-full h-full object-cover rounded-md shadow-sm" />
+                                    </div>
+                                    <div className="flex flex-col flex-grow pr-8 text-left">
+                                        <p className="text-[10px] uppercase text-stone-500 font-bold mb-1 line-clamp-1">{carte.autor}</p>
+                                        <h4 className="text-sm font-serif font-bold text-anthracite dark:text-stone-200 line-clamp-2 mb-2 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">{carte.titlu}</h4>
+                                        <span className="mt-auto text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-500 font-black text-lg">
+                                            {carte.pret} <span className="text-xs font-bold text-amber-500 opacity-80 uppercase">RON</span>
+                                        </span>
+                                    </div>
+                                </Link>
                                 <button 
                                     onClick={() => elimina(carte._id)}
                                     className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-red-500 transition-colors"

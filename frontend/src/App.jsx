@@ -11,6 +11,9 @@ import Livrare from './pages/Livrare';
 import Termeni from './pages/Termeni';
 import WishlistDrawer from './components/WishlistDrawer';
 import ChatWidget from './components/ChatWidget';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import SuccessPage from './pages/SuccessPage';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 
 function AppContent() {
@@ -43,8 +46,8 @@ function AppContent() {
   const [arataWishlist, setArataWishlist] = useState(false);
 
   useEffect(() => {
-    if (location.pathname === '/login' || location.pathname === '/register') {
-      setVizualizare('login');
+    if (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/forgot-password' || location.pathname.startsWith('/reset-password') || location.pathname === '/success') {
+      setVizualizare('login'); // ne folosim de acest vizualizare=login ca să ascundem meniul și footerul standard
     } else if (location.pathname === '/dashboard') {
       setVizualizare('dashboard');
     } else if (location.pathname === '/profil') {
@@ -372,6 +375,9 @@ function AppContent() {
               />
             }
           />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/success" element={<SuccessPage setCos={setCos} />} />
           <Route path="/dashboard" element={<AdminDashboard />} />
           <Route
             path="/carte/:id"

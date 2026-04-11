@@ -12,7 +12,10 @@ const UserSchema = new mongoose.Schema({
     cos: [{
         carte: { type: mongoose.Schema.Types.ObjectId, ref: 'Carte' },
         cantitate: { type: Number, default: 1 } 
-    }]
+    }],
+
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);
