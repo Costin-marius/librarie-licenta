@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { PromoContext } from '../context/PromoContext';
 
 function CheckoutCart({
     cos,
@@ -14,6 +15,33 @@ function CheckoutCart({
 }) {
     const [metodaPlata, setMetodaPlata] = useState('ramburs');
     const [dateLivrare, setDateLivrare] = useState({ nume: '', adresa: '', telefon: '' });
+    const [codReducere, setCodReducere] = useState('');
+    const [mesajReducere, setMesajReducere] = useState({ text: '', type: '' });
+    const [reducereAplicata, setReducereAplicata] = useState(false);
+    
+    // NOU: Extragem contextul comunicat în interfață pentru a ști dacă el a ascuns banner-ul din tavan.
+    const { isBannerVisible } = useContext(PromoContext);
+
+    const aplicaReducere = (e) => {
+        e.preventDefault();
+        if (codReducere.trim().toUpperCase() === 'LIBRARIE10') {
+            if (totalCos >= 180) {
+                setReducereAplicata(true);
+                setMesajReducere({ text: 'Cod aplicat! Ai primit 10% reducere.', type: 'success' });
+            } else {
+                setReducereAplicata(false);
+                setMesajReducere({ text: 'Comanda trebuie să fie de minim 180 lei pentru a aplica acest cod.', type: 'error' });
+            }
+        } else {
+            if (codReducere.trim() !== '') {
+                setReducereAplicata(false);
+                setMesajReducere({ text: 'Cod invalid sau expirat.', type: 'error' });
+            } else {
+                setReducereAplicata(false);
+                setMesajReducere({ text: '', type: '' });
+            }
+        }
+    };
 
     const plaseazaComanda = async (e) => {
         e.preventDefault();
@@ -28,14 +56,18 @@ function CheckoutCart({
             return;
         }
 
-        const costTransport = totalCos >= 150 ? 0 : 30;
-        const totalFinal = totalCos + costTransport;
+        const valoareReducere = reducereAplicata ? totalCos * 0.1 : 0;
+        const totalDupaReducere = totalCos - valoareReducere;
+        const costTransport = totalDupaReducere >= 150 ? 0 : 30;
+        const totalFinal = totalDupaReducere + costTransport;
 
         const dateComanda = {
             userId: idUtilizator,
             dateLivrare,
             metodaPlata,
             total: Number(totalFinal.toFixed(2)),
+            sumaReducere: Number(valoareReducere.toFixed(2)),
+            codReducereAplicat: reducereAplicata ? 'LIBRARIE10' : null,
             produse: cos.map(item => ({ 
                 carteId: item._id, 
                 titlu: item.titlu, 
@@ -53,7 +85,9 @@ function CheckoutCart({
                     userId: idUtilizator,
                     produse: dateComanda.produse,
                     dateLivrare: dateComanda.dateLivrare,
-                    totalFinal: dateComanda.total
+                    totalFinal: dateComanda.total,
+                    sumaReducere: dateComanda.sumaReducere,
+                    codReducereAplicat: dateComanda.codReducereAplicat
                 });
                 
                 window.location.href = resStripe.data.url;
@@ -123,9 +157,54 @@ function CheckoutCart({
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-6 text-right">
-                            <span className="text-stone-500 dark:text-stone-400 text-lg mr-2">Total de plată:</span>
-                            <span className="text-3xl font-bold text-anthracite dark:text-white">{totalCos.toFixed(2)} <span className="text-amber-500">RON</span></span>
+                        <div className="mt-8 border-t border-stone-200 dark:border-slate-700 pt-6">
+                            <div className="flex flex-col gap-2 mb-6">
+                                {(!reducereAplicata && !isBannerVisible) && (
+                                    <div className="flex items-center gap-3 mb-2 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400 p-3 rounded-lg border border-amber-200 dark:border-amber-800/50 shadow-sm transition-colors">
+                                        <span className="text-xl">🎁</span>
+                                        <p className="text-sm font-medium">Nu uita! Poți folosi codul <strong>LIBRARIE10</strong> pentru a primi extra reducere.</p>
+                                    </div>
+                                )}
+                                <label className="text-sm font-semibold text-anthracite dark:text-stone-300">Ai un cod de reducere?</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Introdu codul aici..."
+                                        value={codReducere}
+                                        onChange={(e) => setCodReducere(e.target.value)}
+                                        className="flex-1 px-4 py-2 bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-600 rounded-lg text-anthracite dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none transition-colors"
+                                        onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); aplicaReducere(e); } }}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={aplicaReducere}
+                                        className="bg-stone-200 hover:bg-stone-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-anthracite dark:text-stone-200 px-4 py-2 rounded-lg font-semibold transition-colors"
+                                    >
+                                        Aplică
+                                    </button>
+                                </div>
+                                {mesajReducere.text && (
+                                    <p className={`text-sm mt-1 ${mesajReducere.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                                        {mesajReducere.text}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-stone-500 dark:text-stone-400">Subtotal:</span>
+                                <span className="font-semibold text-anthracite dark:text-stone-300">{totalCos.toFixed(2)} RON</span>
+                            </div>
+                            {reducereAplicata && (
+                                <div className="flex justify-between items-center mb-2 text-green-600 dark:text-green-400">
+                                    <span>Reducere (10%):</span>
+                                    <span className="font-semibold">-{(totalCos * 0.1).toFixed(2)} RON</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center mt-4 pt-4 border-t border-stone-200 dark:border-slate-700">
+                                <span className="text-stone-600 dark:text-stone-300 text-lg font-bold">Total produse:</span>
+                                <span className="text-3xl font-bold text-anthracite dark:text-white">
+                                    {(reducereAplicata ? totalCos * 0.9 : totalCos).toFixed(2)} <span className="text-amber-500 text-lg">RON</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
 

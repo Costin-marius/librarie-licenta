@@ -83,16 +83,25 @@ const IstoricComenzi = ({ comenzi, dateUser, inapoiLaHome }) => {
                                     ))}
                                 </ul>
                                 
-                                {/* Subtotal si Transport */}
+                                {/* Subtotal, Reducere si Transport */}
                                 {(() => {
                                     const subtotal = comanda.produse.reduce((acc, p) => acc + (p.pret * p.cantitate), 0);
-                                    const costTransport = comanda.total - subtotal;
+                                    const sumaReducere = comanda.sumaReducere || 0;
+                                    let costTransport = comanda.total - subtotal + sumaReducere;
+                                    if (costTransport < 0.01) costTransport = 0; // Prevenim float errors
+
                                     return (
                                         <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700/50 flex flex-col gap-2 text-sm max-w-sm ml-auto">
                                             <div className="flex justify-between text-stone-500 dark:text-stone-400">
                                                 <span>Subtotal:</span>
                                                 <span className="font-medium">{subtotal.toFixed(2)} lei</span>
                                             </div>
+                                            {sumaReducere > 0 && (
+                                                <div className="flex justify-between text-red-500 dark:text-red-400 font-medium">
+                                                    <span>Reducere aplicată{comanda.codReducereAplicat ? ` (${comanda.codReducereAplicat})` : ''}:</span>
+                                                    <span>- {sumaReducere.toFixed(2)} lei</span>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between text-stone-500 dark:text-stone-400">
                                                 <span>Transport:</span>
                                                 {costTransport <= 0.01 ? (

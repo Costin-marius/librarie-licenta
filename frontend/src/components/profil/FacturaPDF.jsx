@@ -53,13 +53,22 @@ const InvoiceTemplate = ({ factura, dateUser }) => {
             <div className="flex justify-end pt-6 border-t-2 border-stone-200">
                 {(() => {
                     const subtotal = factura.produse.reduce((acc, p) => acc + (p.pret * p.cantitate), 0);
-                    const costTransport = factura.total - subtotal;
+                    const sumaReducere = factura.sumaReducere || 0;
+                    let costTransport = factura.total - subtotal + sumaReducere;
+                    if (costTransport < 0.01) costTransport = 0;
+
                     return (
                         <div className="w-1/2 space-y-3">
                             <div className="flex justify-between text-stone-600">
                                 <span>Subtotal:</span>
                                 <span className="font-semibold">{subtotal.toFixed(2)} lei</span>
                             </div>
+                            {sumaReducere > 0 && (
+                                <div className="flex justify-between text-red-600 font-medium">
+                                    <span>Reducere aplicată{factura.codReducereAplicat ? ` (${factura.codReducereAplicat})` : ''}:</span>
+                                    <span>- {sumaReducere.toFixed(2)} lei</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-stone-600">
                                 <span>Transport:</span>
                                 <span className="font-semibold">{costTransport <= 0.01 ? 'Gratuit' : `${costTransport.toFixed(2)} lei`}</span>

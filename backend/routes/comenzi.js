@@ -8,7 +8,7 @@ const { trimiteEmail } = require('../services/emailService');
 // 1. Rută pentru plasarea unei comenzi noi
 router.post('/', async (req, res) => {
     try {
-        const { dateLivrare, produse, total, metodaPlata, userId } = req.body;
+        const { dateLivrare, produse, total, metodaPlata, userId, sumaReducere, codReducereAplicat } = req.body;
 
         if (!userId) {
             return res.status(400).json({ mesaj: 'Trebuie să fii logat pentru a plasa o comandă!' });
@@ -23,6 +23,8 @@ router.post('/', async (req, res) => {
             dateLivrare,
             produse,
             total,
+            sumaReducere: sumaReducere || 0,
+            codReducereAplicat: codReducereAplicat || null,
             metodaPlata,
             stare: stareInitiala // Setăm explicit starea
         });
@@ -49,6 +51,7 @@ router.post('/', async (req, res) => {
                             
                             <div style="background-color: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin: 20px 0;">
                                 <p style="margin: 5px 0;"><strong>📦 Număr Comandă:</strong> <span style="color: #2563eb;">${nouaComanda._id}</span></p>
+                                ${nouaComanda.sumaReducere > 0 ? `<p style="margin: 5px 0; color: #ea580c;"><strong>🏷️ Reducere (${nouaComanda.codReducereAplicat}):</strong> -${nouaComanda.sumaReducere} RON</p>` : ''}
                                 <p style="margin: 5px 0;"><strong>💰 Total de plată:</strong> <span style="font-weight: bold; color: #16a34a;">${total} RON</span> (Plată ramburs)</p>
                             </div>
                             

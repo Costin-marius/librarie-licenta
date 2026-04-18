@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -14,7 +14,9 @@ import ChatWidget from './components/ChatWidget';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import SuccessPage from './pages/SuccessPage';
+import PoliticaRetur from './pages/PoliticaRetur';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { PromoProvider, PromoContext } from './context/PromoContext';
 
 function AppContent() {
   const location = useLocation();
@@ -67,6 +69,7 @@ function AppContent() {
 
   const [termenCautare, setTermenCautare] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isBannerVisible, setIsBannerVisible } = useContext(PromoContext);
   const token = localStorage.getItem('token');
   useEffect(() => {
     const id = localStorage.getItem('userId');
@@ -165,8 +168,22 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-ivory text-anthracite dark:bg-slate-900 dark:text-stone-300 font-sans transition-colors duration-300 antialiased overflow-x-hidden flex flex-col">
+      {vizualizare !== 'login' && isBannerVisible && (
+        <div className="fixed top-0 w-full z-[60] bg-amber-500 text-white h-10 flex items-center justify-center text-sm shadow-sm font-medium tracking-wide">
+          <span>Ai 10% reducere la comenzi de peste 180 lei folosind codul <span className="font-bold mx-1 bg-amber-600 rounded px-1.5 py-0.5 text-amber-50 shadow-inner">LIBRARIE10</span> la finalizare!</span>
+          <button 
+            onClick={() => setIsBannerVisible(false)} 
+            className="absolute right-4 text-white hover:text-amber-100 transition-colors"
+            title="Închide anunțul"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      )}
       {vizualizare !== 'login' && (
-        <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-white/70 dark:bg-slate-900/80 border-b border-stone-200/50 dark:border-slate-800/50 h-20 flex items-center px-6 md:px-12 transition-colors duration-300">
+        <nav className={`fixed ${isBannerVisible ? 'top-10' : 'top-0'} w-full z-50 backdrop-blur-md bg-white/70 dark:bg-slate-900/80 border-b border-stone-200/50 dark:border-slate-800/50 h-20 flex items-center px-6 md:px-12 transition-all duration-300`}>
           <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-8">
             <div className="flex-shrink-0 flex items-center gap-6">
               <Link to="/" onClick={() => {
@@ -346,7 +363,7 @@ function AppContent() {
         </nav>
       )}
 
-      <main className="flex-1 flex overflow-hidden mt-20">
+      <main className={`flex-1 flex overflow-hidden ${vizualizare !== 'login' ? (isBannerVisible ? 'mt-[120px]' : 'mt-20') : 'mt-20'}`}>
         <Routes>
           <Route
             path="/"
@@ -394,6 +411,7 @@ function AppContent() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/livrare" element={<Livrare />} />
           <Route path="/termeni" element={<Termeni />} />
+          <Route path="/politica-retur" element={<PoliticaRetur />} />
         </Routes>
       </main>
 
@@ -405,9 +423,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <PromoProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </PromoProvider>
   );
 }
 export default App;

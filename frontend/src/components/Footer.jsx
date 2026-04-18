@@ -28,7 +28,8 @@ function Footer() {
                         <ul className="space-y-3 text-sm text-stone-400 md:text-right">
                             <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/despre-noi">Despre Noi</Link></li>
                             <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/contact">Contact</Link></li>
-                            <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/livrare">Livrare și Retur</Link></li>
+                            <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/livrare">Livrare</Link></li>
+                            <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/politica-retur">Politica de Retur</Link></li>
                             <li><Link className="hover:text-amber-500 transition-colors duration-300" to="/termeni">Termeni și Condiții</Link></li>
                         </ul>
                     </div>

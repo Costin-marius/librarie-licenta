@@ -18,6 +18,8 @@ const ComandaSchema = new mongoose.Schema({
         pret: Number
     }],
     total: { type: Number, required: true },
+    sumaReducere: { type: Number, default: 0 },
+    codReducereAplicat: { type: String, default: null },
     metodaPlata: { type: String, required: true },
     
     stare: { 
